@@ -1,0 +1,7 @@
+{
+    "name": "subs",
+    "scripts": {
+        "dev": "go run index.go",
+        "build": "go build"
+    }
+}
