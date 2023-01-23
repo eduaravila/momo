@@ -24,10 +24,12 @@
         "^build"
       ],
       "env": [
-        "NEXT_PUBLIC_TWITCH_CLIENT_ID",
-        "NEXT_PUBLIC_TWITCH_REDIRECT_URI",
+        "NEXT_PUBLIC_TWITCH_APPLICATION_CLIEND_ID",
+        "NEXT_PUBLIC_TWITCH_APPLICATION_REDIRECT_URI",
         "NEXT_PUBLIC_TWITCH_APPLICATION_SCOPES"
       ],
+      "cache": false,
+      
       "outputs": [
         ".next/**"
       ]
