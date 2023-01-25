@@ -6,18 +6,18 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/smollmegumin/level-TTS/listener/routes"
-	"github.com/smollmegumin/level-TTS/listener/routes/twitch"
 )
 
 func init() {
-	err := godotenv.Load()
+	err := godotenv.Load(".env.local")
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
 }
 
 func main() {
-	http.Handle("/", routes.NewRoute(twitch.NewTwitchRouter()))
-	http.ListenAndServe(":8080", nil)
+	mux := http.NewServeMux()
+	mux.Handle("/", routes.Routes())
+	http.ListenAndServe(":8080", mux)
 
 }
