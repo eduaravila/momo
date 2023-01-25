@@ -8,7 +8,7 @@ import (
 )
 
 func Routes() *http.ServeMux {
-	mux := http.NewServeMux()
-	utils.Handle("GET", "/twitch/auth", twitch.GetToken, mux)
-	return mux
+	mux := utils.NewHandler(http.NewServeMux())
+	mux.Get("/twitch/auth", twitch.GetToken)
+	return mux.GetServeMux()
 }
