@@ -1,0 +1,7 @@
+{
+    "name": "listener",
+    "scripts": {
+        "dev": "go run main.go",
+        "build": "go build"
+    }
+}
