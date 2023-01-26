@@ -1,7 +1,8 @@
 {
     "name": "listener",
     "scripts": {
-        "dev": "go run main.go",
+        "dev": "npm run dev:watch",
+        "dev:watch": "~/go/bin/air",
         "build": "go build"
     }
 }
