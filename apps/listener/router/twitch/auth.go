@@ -6,7 +6,7 @@ import (
 	"io"
 	"net/http"
 
-	urls "github.com/smollmegumin/level-TTS/listener/constant"
+	urls "github.com/smollmegumin/momo/listener/constant"
 )
 
 type TokenBody struct {

@@ -1,4 +1,4 @@
-module github.com/smollmegumin/level-TTS/listener
+module github.com/smollmegumin/momo/listener
 
 go 1.19
 

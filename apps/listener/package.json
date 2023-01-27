@@ -1,8 +1,8 @@
 {
-    "name": "listener",
+    "name": "@momo/listener",
     "scripts": {
         "dev": "npm run dev:watch",
-        "dev:watch": "~/go/bin/air",
+        "dev:watch": "air  -c .air.toml",
         "build": "go build"
     }
 }

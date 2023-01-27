@@ -1,0 +1,18 @@
+# docker-compose file to run golang server
+version: '3'
+services:
+  lister_development:
+    build:
+      context: ./apps/listener
+      target: base
+    container_name: listener_development    
+    hostname: listener_api
+    environment:
+      - ENV=development
+    volumes:
+      - ./apps/listener:/listener/src/app
+    working_dir: /listener/src/app
+    ports:
+      - "8080:8080"
+    command: sh -c "air -c .air.toml"
+    restart: always
