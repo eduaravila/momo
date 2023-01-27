@@ -4,14 +4,16 @@ services:
   lister_development:
     build:
       context: ./apps/listener
-      target: base
+      target: dev
     container_name: listener_development    
     hostname: listener_api
     environment:
       - ENV=development
+    env_file:
+      - ./apps/listener/.env.development.local
     volumes:
       - ./apps/listener:/listener/src/app
-    working_dir: /listener/src/app
+    working_dir: /app/src/app
     ports:
       - "8080:8080"
     command: sh -c "air -c .air.toml"

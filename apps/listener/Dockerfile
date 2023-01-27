@@ -1,24 +1,23 @@
-# Choose whatever you want, version >= 1.16
 FROM golang:1.19-alpine as base
 
 LABEL author="EduardoAvila <me@eduaravila.com>"
 
 WORKDIR /app/src/app
 
-
+COPY . .
 RUN go install github.com/cosmtrek/air@latest
-COPY go.mod go.sum ./
 RUN go mod download
 
+FROM base as dev
 
 
-FROM base as builder
+FROM base as prod
 
-WORKDIR /app/src/app
+ENV ENV=production
 
 # create dir for the binary
 RUN mkdir -p /app/bin
-RUN  go build -o bin/app main .
+RUN  go build -o bin/app
 
 # execute the binary
-CMD [ "./main" ]
+CMD [ "./app" ]
