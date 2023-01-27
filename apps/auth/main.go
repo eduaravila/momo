@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 
-	"github.com/smollmegumin/momo/listener/router"
+	"github.com/smollmegumin/momo/auth/router"
 )
 
 func main() {

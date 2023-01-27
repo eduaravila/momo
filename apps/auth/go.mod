@@ -1,4 +1,4 @@
-module github.com/smollmegumin/momo/listener
+module github.com/smollmegumin/momo/auth
 
 go 1.19
 

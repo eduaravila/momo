@@ -1,6 +1,6 @@
 FROM golang:1.19-alpine as base
 
-LABEL author="EduardoAvila <me@eduaravila.com>"
+LABEL maintainer="EduardoAvila <me@eduaravila.com>"
 
 WORKDIR /app/src/app
 

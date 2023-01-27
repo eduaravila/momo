@@ -1,3 +1,6 @@
 go 1.19
 
-use ./apps/listener
+use (
+	./apps/auth
+	./apps/db
+)

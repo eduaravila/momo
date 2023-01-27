@@ -1,0 +1,11 @@
+version: "2"
+project:
+  id: @momo/db
+sql:
+  - engine: "postgresql"
+    queries: "query.sql"
+    schema: "./schema"
+    gen:
+      go:
+        package: "tutorial"
+        out: "tutorial"

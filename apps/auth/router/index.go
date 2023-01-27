@@ -3,8 +3,8 @@ package router
 import (
 	"net/http"
 
-	"github.com/smollmegumin/momo/listener/router/twitch"
-	"github.com/smollmegumin/momo/listener/util"
+	"github.com/smollmegumin/momo/auth/router/twitch"
+	"github.com/smollmegumin/momo/auth/util"
 )
 
 func Routes() *http.ServeMux {

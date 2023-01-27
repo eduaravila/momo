@@ -18,3 +18,23 @@ services:
       - "8080:8080"
     command: sh -c "air -c .air.toml"
     restart: always
+    depends_on:
+      - serviceName: db
+        condition: service_healthy
+  db:
+    build: 
+      context: ./apps/db      
+    container_name: db
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=postgres
+    ports:
+      - "5433:5432"
+    restart: always
+    volumes:
+      - db:/var/lib/postgresql/data
+  volumes:
+    db:
+      driver: local
+  
