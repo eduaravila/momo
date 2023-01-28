@@ -15,7 +15,6 @@ CREATE TABLE users (
 CREATE TABLE accounts (
     id uuid primary key not null,
     user_id uuid not null,
-    platform uuid not null,
     access_token varchar(255) not null,
     refresh_token varchar(255) not null,
     created_at timestamp not null,
@@ -23,7 +22,6 @@ CREATE TABLE accounts (
     scope varchar(255) not null,
     sub varchar(255) not null,
     FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (platform) REFERENCES platforms(id)
 );
 
 CREATE TABLE sessions (
@@ -38,78 +36,58 @@ CREATE TABLE sessions (
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
-CREATE TABLE platforms (
-    id uuid primary key not null,
-    name varchar(255) not null,
-    created_at timestamp not null,
-    updated_at timestamp not null
-);
 
-CREATE TABLE playlists (
+CREATE TABLE overlays (
     id uuid primary key not null,
+    is_banned boolean not null default false,
+    is_enabled boolean not null default true,
     user_id uuid not null,
-    platform uuid not null,
-    name varchar(255) not null,
-    description varchar(255) not null,
     created_at timestamp not null,
     updated_at timestamp not null,
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (platform) REFERENCES platforms(id)
+    FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
-CREATE TABLE playlist_tracks (
-    id uuid primary key not null,
-    playlist_id uuid not null,
-    track_id uuid not null,
-    FOREIGN KEY (playlist_id) REFERENCES playlists(id),
-    FOREIGN KEY (track_id) REFERENCES tracks(id)
-);
-
-CREATE TABLE tracks (
-    id uuid primary key not null,
-    title varchar(255) not null,
-    artist varchar(255) not null,
-    album varchar(255) not null,
-    album_cover varchar(255) not null,
-    duration int not null,
-    created_at timestamp not null,
-    updated_at timestamp not null
-);
-
-CREATE TABLE tracks_history (
+CREATE TABLE messages (
     id uuid primary key not null,
     user_id uuid not null,
-    track_id uuid not null,
+    message text not null,
     created_at timestamp not null,
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (track_id) REFERENCES tracks(id)
+    audio_url varchar(255) not null,
+    author_name varchar(255) not null,
+    FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
-CREATE TABLE playlists_history (
+CREATE TABLE configurations (
     id uuid primary key not null,
     user_id uuid not null,
-    playlist_id uuid not null,
-    created_at timestamp not null,
+    max_message_length integer not null,
+    min_amount_tip integer not null,
+    min_point_tip integer not null,
+    fallback_voice uuid,
+    is_channel_point_enabled boolean not null,
+    is_tipping_enabled boolean not null,
+    is_bits_enabled boolean not null,
+    is_sub_enabled boolean not null,
+    is_donation_enabled boolean not null,
+    is_command_enabled boolean not null,
+    is_chat_enabled boolean not null,
+    is_following_enabled boolean not null,
+    is_hosting_enabled boolean not null,
     FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (playlist_id) REFERENCES playlists(id)
+    FOREIGN KEY (fallback_voice) REFERENCES voices(id)
 );
 
-CREATE TABLE tracks_history (
-    id uuid primary key not null,
-    user_id uuid not null,
-    track_id uuid not null,
-    created_at timestamp not null,
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (track_id) REFERENCES tracks(id)
-);
 
-CREATE TABLE playlists_history (
-    id uuid primary key not
 
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
 DROP TABLE users;
+DROP TABLE accounts;
+DROP TABLE sessions;
+DROP TABLE overlays;
+DROP TABLE messages;
+DROP TABLE configurations;
 DROP EXTENSION "uuid-ossp";
 -- +goose StatementEnd
