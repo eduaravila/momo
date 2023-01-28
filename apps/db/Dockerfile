@@ -7,10 +7,12 @@ LABEL maintainer="EduardoAvila <me@eduaravila.com>"
 WORKDIR /usr/src/app
 
 
+ENV POSTGRES_PASSWORD=postgres
+ENV POSTGRES_USER=postgres
+ENV POSTGRES_DB=postgres
+
 RUN go install github.com/pressly/goose/v3/cmd/goose@latest
 
 # Apply all available migrations.
 RUN  goose postgres "user=postgres password=postgres dbname=postgres sslmode=disable" up
 
-# Run the initialization script when the container starts
-CMD ["sh", "-c", "pg_ctl start && tail -f /dev/null"]
