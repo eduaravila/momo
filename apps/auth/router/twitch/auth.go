@@ -6,7 +6,7 @@ import (
 	"io"
 	"net/http"
 
-	urls "github.com/smollmegumin/momo/auth/constant"
+	urls "github.com/eduaravila/momo/auth/constant"
 )
 
 type TokenBody struct {

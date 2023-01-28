@@ -1,4 +1,4 @@
-module github.com/smollmegumin/momo/auth
+module github.com/eduaravila/momo/auth
 
 go 1.19
 

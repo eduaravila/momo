@@ -3,12 +3,12 @@ package router
 import (
 	"net/http"
 
-	"github.com/smollmegumin/momo/auth/router/twitch"
-	"github.com/smollmegumin/momo/auth/util"
+	"github.com/eduaravila/momo/auth/router/twitch"
+	"github.com/eduaravila/momo/packages/router"
 )
 
 func Routes() *http.ServeMux {
-	mux := util.NewHandler(http.NewServeMux())
+	mux := router.NewHandler(http.NewServeMux())
 	mux.Get("/oauth/twitch/callback", twitch.GetToken)
 	return mux.GetServeMux()
 }
