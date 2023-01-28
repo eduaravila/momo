@@ -63,7 +63,7 @@ CREATE TABLE configurations (
     max_message_length integer not null,
     min_amount_tip integer not null,
     min_point_tip integer not null,
-    fallback_voice uuid,
+    fallback_voice uuid not null,
     is_channel_point_enabled boolean not null,
     is_tipping_enabled boolean not null,
     is_bits_enabled boolean not null,

@@ -1,0 +1,11 @@
+version: "2"
+project:
+  id: @momo/db
+sql:
+  - engine: "postgresql"
+    queries: "./queries"
+    schema: "./migrations"
+    gen:
+      go:
+        package: "queries"
+        out: "queries"

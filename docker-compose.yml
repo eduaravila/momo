@@ -3,34 +3,47 @@ version: '3'
 services:
   lister_development:
     build:
-      context: ./apps/listener
+      context: ./apps/auth
       target: dev
-    container_name: listener_development    
-    hostname: listener_api
+    container_name: auth_development    
+    hostname: auth_api
     environment:
       - ENV=development
+      - DB_HOST=postgres 
     env_file:
-      - ./apps/listener/.env.development.local
+      - ./apps/auth/.env.development.local
     volumes:
-      - ./apps/listener:/listener/src/app
+      - ./apps/auth:/auth/src/app
     working_dir: /app/src/app
     ports:
       - "8080:8080"
     command: sh -c "air -c .air.toml"
     restart: always
     depends_on:
-      - serviceName: db
-        condition: service_healthy
-  db:
-    build: 
-      context: ./apps/db      
-    container_name: db
+      - postgres
+  postgres:
+    image: postgres:15.1-alpine
     ports:
       - "5433:5432"
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=postgres
     restart: always
     volumes:
-      - db:/var/lib/postgresql/data
-  volumes:
-    db:
-      driver: local
+      - postgresdata:/var/lib/postgresql/data
+  migrations:
+    environment:
+      DATABASE_URL: postgres
+    command: sh -c "ls -la && goose postgres "postgresql://postgres:postgres@postgres:5432/postgres" up"
+    build:
+      context: ./apps/db
+    links:
+      - postgres
+    depends_on:
+      - postgres
+
+volumes:
+  postgresdata:
+    driver: local
   
