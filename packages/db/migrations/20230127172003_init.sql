@@ -11,6 +11,27 @@ CREATE TABLE users (
     updated_at timestamp not null
 );
 
+CREATE TABLE voices (
+    id uuid primary key not null,
+    name varchar(255) not null,
+    created_at timestamp not null default now()
+);
+
+CREATE TABLE files (
+    id uuid primary key not null,
+    file_name varchar(255) not null,
+    file_path varchar(255) not null,
+    file_type varchar(255) not null,
+    created_at timestamp not null default now()
+);
+
+CREATE TABLE platforms (
+    name varchar(255) primary key not null,
+    is_active boolean not null default true,
+    created_at timestamp not null default now(),
+    updated_at timestamp not null default now()
+);
+
 CREATE TABLE accounts (
     id uuid primary key not null,
     user_id uuid not null,
@@ -22,7 +43,7 @@ CREATE TABLE accounts (
     scope varchar(255) not null,
     sub varchar(255) not null,
     FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN key (platform_id) REFERENCES platforms(name)
+    FOREIGN KEY (platform_id) REFERENCES platforms(name)
 );
 
 CREATE TABLE sessions (
@@ -58,14 +79,6 @@ CREATE TABLE messages (
     FOREIGN KEY (audio_file_id) REFERENCES files(id)
 );
 
-CREATE TABLE files (
-    id uuid primary key not null,
-    file_name varchar(255) not null,
-    file_path varchar(255) not null,
-    file_type varchar(255) not null,
-    created_at timestamp not null default now()
-);
-
 CREATE TABLE configurations (
     id uuid primary key not null,
     account_id uuid not null,
@@ -84,14 +97,8 @@ CREATE TABLE configurations (
     is_hosting_enabled boolean not null,
     banned_word_file_id uuid not null,
     FOREIGN KEY (account_id) REFERENCES accounts(id),
-    FOREIGN KEY (fallback_voice) REFERENCES voices(id)
-    FOREIGN KEY (banned_words_file_id) REFERENCES files(id)
-);
-
-CREATE TABLE voices (
-    id uuid primary key not null,
-    name varchar(255) not null,
-    created_at timestamp not null default now(),
+    FOREIGN KEY (fallback_voice) REFERENCES voices(id),
+    FOREIGN KEY (banned_word_file_id) REFERENCES files(id)
 );
 
 CREATE TABLE configurations_voices_banned_join (
@@ -100,13 +107,6 @@ CREATE TABLE configurations_voices_banned_join (
     voice_id uuid not null,
     FOREIGN KEY (configuration_id) REFERENCES configurations(id),
     FOREIGN KEY (voice_id) REFERENCES voices(id)
-);
-
-CREATE TABLE platforms (
-    name varchar(255) primary key not null,
-    is_active boolean not null default true,
-    created_at timestamp not null default now(),
-    updated_at timestamp not null default now()
 );
 
 -- +goose StatementEnd
