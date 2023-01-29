@@ -1,0 +1,8 @@
+{
+    "name": "router",
+    "description": "http methods wrapper for go http.servemux",
+    "authors": "Eduardo Avila <contact@eduaravila.com>",
+    "version": "1.0.0",
+    "main": "pathToMain",
+    "dependencies": {}
+}
