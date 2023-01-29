@@ -1,2 +1,4 @@
+github.com/google/uuid v1.3.0 h1:t6JiXgmwXMjEs8VusXIJk2BXHsn+wx8BZdTaoZ5fu7I=
+github.com/google/uuid v1.3.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/pressly/goose/v3 v3.9.0 h1:3LB3zjt9zTebK+URKuCdGAxPwtpJfyVlalrzCzcVAtA=
 github.com/pressly/goose/v3 v3.9.0/go.mod h1:+/6BqhGx7bt3cRK22Hm3BsJXF2/2gQAhO/xExNG5cSA=

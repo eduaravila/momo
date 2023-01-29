@@ -1,6 +1,6 @@
 version: "2"
 project:
-  id: @momo/db
+  id: momo/db
 sql:
   - engine: "postgresql"
     queries: "./queries"

@@ -8,7 +8,7 @@ CREATE TABLE users (
     created_at timestamp not null default now(),
     picture varchar(255) not null,
     prefered_username varchar(255) not null,
-    updated_at timestamp not null
+    updated_at timestamp not null default now()
 );
 
 CREATE TABLE voices (
@@ -112,21 +112,19 @@ CREATE TABLE configurations_voices_banned_join (
 -- +goose StatementEnd
 -- +goose Down
 -- +goose StatementBegin
-DROP TABLE users;
+DROP TABLE users cascade;
 
-DROP TABLE accounts;
+DROP TABLE accounts cascade;
 
-DROP TABLE sessions;
+DROP TABLE sessions cascade;
 
 DROP TABLE overlays;
 
 DROP TABLE messages;
 
-DROP TABLE configurations;
+DROP TABLE configurations cascade;
 
-DROP EXTENSION "uuid-ossp";
-
-DROP TABLE voices;
+DROP TABLE voices cascade;
 
 DROP TABLE configurations_voices_banned_join;
 
@@ -134,4 +132,5 @@ DROP TABLE platforms;
 
 DROP TABLE files;
 
+DROP EXTENSION "uuid-ossp";
 -- +goose StatementEnd
