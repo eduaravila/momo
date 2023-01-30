@@ -1,10 +1,3 @@
-
-CREATE TABLE users (
-    id uuid primary key not null,    
-    created_at timestamp not null default now(),
-    updated_at timestamp not null default now()
-);
-
 -- name: CreateUser :exec 
 INSERT INTO users (id) VALUES ($1) RETURNING id;
 

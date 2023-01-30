@@ -30,7 +30,7 @@ CREATE TABLE platforms (
 );
 
 CREATE TABLE accounts (
-    id uuid primary key not null, 
+    id varchar(255) primary key not null, 
     name varchar(255) not null,
     picture varchar(255) not null,
     prefered_username varchar(255) not null,
@@ -40,7 +40,6 @@ CREATE TABLE accounts (
     created_at timestamp not null default now(),
     expired_at timestamp not null,
     scope varchar(255) not null,
-    sub varchar(255) not null,
     FOREIGN KEY (platform_id) REFERENCES platforms(name)
 );
 
@@ -65,7 +64,7 @@ CREATE TABLE role_permissions (
 CREATE TABLE user_accounts_join (
     PRIMARY KEY (user_id, account_id),
     user_id uuid not null,
-    account_id uuid not null,
+    account_id varchar(255) not null,
     role_id SERIAL not null,
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (account_id) REFERENCES accounts(id),
@@ -88,7 +87,7 @@ CREATE TABLE overlays (
     id uuid primary key not null,
     is_banned boolean not null default false,
     is_enabled boolean not null default true,
-    account_id uuid not null,
+    account_id  varchar(255) not null,
     created_at timestamp not null default now(),
     updated_at timestamp not null default now(),
     FOREIGN KEY (account_id) REFERENCES accounts(id)
@@ -96,7 +95,7 @@ CREATE TABLE overlays (
 
 CREATE TABLE messages (
     id uuid primary key not null,
-    account_id uuid not null,
+    account_id varchar(255) not null,
     message text not null,
     created_at timestamp not null default now(),
     audio_file_id uuid,
@@ -107,7 +106,7 @@ CREATE TABLE messages (
 
 CREATE TABLE configurations (
     id uuid primary key not null,
-    account_id uuid not null,
+    account_id varchar(255) not null,
     max_message_length integer not null,
     min_amount_tip integer not null,
     min_point_tip integer not null,
@@ -158,6 +157,14 @@ DROP TABLE configurations_voices_banned_join;
 DROP TABLE platforms;
 
 DROP TABLE files;
+
+DROP TABLE roles cascade;
+
+DROP TABLE permissions cascade;
+
+DROP TABLE role_permissions cascade;
+
+DROP TABLE user_accounts_join cascade;
 
 DROP EXTENSION "uuid-ossp";
 -- +goose StatementEnd
