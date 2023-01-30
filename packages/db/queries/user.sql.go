@@ -7,51 +7,32 @@ package queries
 
 import (
 	"context"
-	"time"
 
 	"github.com/google/uuid"
 )
 
-const createUser = `-- name: CreateUser :exec
-INSERT INTO
-    users (
-        id,
-        name,
-        created_at,
-        picture,
-        prefered_username,
-        updated_at
-    )
-VALUES
-    ($1, $2, $3, $4, $5, $6) RETURNING id
+const countUsers = `-- name: CountUsers :one
+SELECT COUNT(*) FROM users
 `
 
-type CreateUserParams struct {
-	ID               uuid.UUID
-	Name             string
-	CreatedAt        time.Time
-	Picture          string
-	PreferedUsername string
-	UpdatedAt        time.Time
+func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countUsers)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }
 
-func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
-	_, err := q.db.ExecContext(ctx, createUser,
-		arg.ID,
-		arg.Name,
-		arg.CreatedAt,
-		arg.Picture,
-		arg.PreferedUsername,
-		arg.UpdatedAt,
-	)
+const createUser = `-- name: CreateUser :exec
+INSERT INTO users (id) VALUES ($1) RETURNING id
+`
+
+func (q *Queries) CreateUser(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, createUser, id)
 	return err
 }
 
 const deleteUser = `-- name: DeleteUser :exec
-DELETE FROM
-    users
-WHERE
-    id = $1
+DELETE FROM users WHERE id = $1
 `
 
 func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) error {
@@ -60,49 +41,22 @@ func (q *Queries) DeleteUser(ctx context.Context, id uuid.UUID) error {
 }
 
 const getUser = `-- name: GetUser :one
-SELECT
-    id,
-    name,
-    created_at,
-    picture,
-    prefered_username,
-    updated_at
-FROM
-    users
-WHERE
-    id = $1
+SELECT id, created_at, updated_at FROM users WHERE id = $1
 `
 
 func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
 	row := q.db.QueryRowContext(ctx, getUser, id)
 	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.CreatedAt,
-		&i.Picture,
-		&i.PreferedUsername,
-		&i.UpdatedAt,
-	)
+	err := row.Scan(&i.ID, &i.CreatedAt, &i.UpdatedAt)
 	return i, err
 }
 
-const getUsers = `-- name: GetUsers :many
-SELECT
-    id,
-    name,
-    created_at,
-    picture,
-    prefered_username,
-    updated_at
-FROM
-    users
-ORDER BY
-    created_at DESC
+const getUsersByIDs = `-- name: GetUsersByIDs :many
+SELECT id, created_at, updated_at FROM users WHERE id = ANY($1)
 `
 
-func (q *Queries) GetUsers(ctx context.Context) ([]User, error) {
-	rows, err := q.db.QueryContext(ctx, getUsers)
+func (q *Queries) GetUsersByIDs(ctx context.Context, id uuid.UUID) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, getUsersByIDs, id)
 	if err != nil {
 		return nil, err
 	}
@@ -110,14 +64,34 @@ func (q *Queries) GetUsers(ctx context.Context) ([]User, error) {
 	var items []User
 	for rows.Next() {
 		var i User
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.CreatedAt,
-			&i.Picture,
-			&i.PreferedUsername,
-			&i.UpdatedAt,
-		); err != nil {
+		if err := rows.Scan(&i.ID, &i.CreatedAt, &i.UpdatedAt); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listUsers = `-- name: ListUsers :many
+SELECT id, created_at, updated_at FROM users
+`
+
+func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, listUsers)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(&i.ID, &i.CreatedAt, &i.UpdatedAt); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -132,35 +106,10 @@ func (q *Queries) GetUsers(ctx context.Context) ([]User, error) {
 }
 
 const updateUser = `-- name: UpdateUser :exec
-UPDATE
-    users
-SET
-    name = $2,
-    created_at = $3,
-    picture = $4,
-    prefered_username = $5,
-    updated_at = $6
-WHERE
-    id = $1
+UPDATE users SET updated_at = now() WHERE id = $1
 `
 
-type UpdateUserParams struct {
-	ID               uuid.UUID
-	Name             string
-	CreatedAt        time.Time
-	Picture          string
-	PreferedUsername string
-	UpdatedAt        time.Time
-}
-
-func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
-	_, err := q.db.ExecContext(ctx, updateUser,
-		arg.ID,
-		arg.Name,
-		arg.CreatedAt,
-		arg.Picture,
-		arg.PreferedUsername,
-		arg.UpdatedAt,
-	)
+func (q *Queries) UpdateUser(ctx context.Context, id uuid.UUID) error {
+	_, err := q.db.ExecContext(ctx, updateUser, id)
 	return err
 }

@@ -5,21 +5,24 @@
 package queries
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
 )
 
 type Account struct {
-	ID           uuid.UUID
-	UserID       uuid.UUID
-	AccessToken  string
-	RefreshToken string
-	PlatformID   string
-	CreatedAt    time.Time
-	ExpiredAt    time.Time
-	Scope        string
-	Sub          string
+	ID               uuid.UUID
+	Name             string
+	Picture          string
+	PreferedUsername string
+	AccessToken      string
+	RefreshToken     string
+	PlatformID       string
+	CreatedAt        time.Time
+	ExpiredAt        time.Time
+	Scope            string
+	Sub              string
 }
 
 type Configuration struct {
@@ -72,11 +75,28 @@ type Overlay struct {
 	UpdatedAt time.Time
 }
 
+type Permission struct {
+	ID          int32
+	Name        string
+	Description sql.NullString
+}
+
 type Platform struct {
 	Name      string
 	IsActive  bool
 	CreatedAt time.Time
 	UpdatedAt time.Time
+}
+
+type Role struct {
+	ID          int32
+	Name        string
+	Description sql.NullString
+}
+
+type RolePermission struct {
+	RoleID       int32
+	PermissionID int32
 }
 
 type Session struct {
@@ -91,12 +111,15 @@ type Session struct {
 }
 
 type User struct {
-	ID               uuid.UUID
-	Name             string
-	CreatedAt        time.Time
-	Picture          string
-	PreferedUsername string
-	UpdatedAt        time.Time
+	ID        uuid.UUID
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+type UserAccountsJoin struct {
+	UserID    uuid.UUID
+	AccountID uuid.UUID
+	RoleID    int32
 }
 
 type Voice struct {

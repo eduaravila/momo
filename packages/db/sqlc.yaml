@@ -3,7 +3,7 @@ project:
   id: momo/db
 sql:
   - engine: "postgresql"
-    queries: "./queries"
+    queries: "./sql"
     schema: "./migrations"
     gen:
       go:

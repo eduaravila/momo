@@ -3,7 +3,7 @@ package router
 import (
 	"net/http"
 
-	"github.com/eduaravila/momo/auth/router/twitch"
+	"github.com/eduaravila/momo/apps/auth/router/twitch"
 	"github.com/eduaravila/momo/packages/router"
 )
 

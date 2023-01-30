@@ -3,11 +3,8 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE users (
-    id uuid primary key not null,
-    name varchar(255) not null,
+    id uuid primary key not null,    
     created_at timestamp not null default now(),
-    picture varchar(255) not null,
-    prefered_username varchar(255) not null,
     updated_at timestamp not null default now()
 );
 
@@ -33,8 +30,10 @@ CREATE TABLE platforms (
 );
 
 CREATE TABLE accounts (
-    id uuid primary key not null,
-    user_id uuid not null,
+    id uuid primary key not null, 
+    name varchar(255) not null,
+    picture varchar(255) not null,
+    prefered_username varchar(255) not null,
     access_token varchar(255) not null,
     refresh_token varchar(255) not null,
     platform_id varchar(255) not null,
@@ -42,8 +41,35 @@ CREATE TABLE accounts (
     expired_at timestamp not null,
     scope varchar(255) not null,
     sub varchar(255) not null,
-    FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (platform_id) REFERENCES platforms(name)
+);
+
+CREATE TABLE roles (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description VARCHAR(255)
+);
+
+CREATE TABLE permissions (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    description VARCHAR(255)
+);
+
+CREATE TABLE role_permissions (
+    role_id INTEGER REFERENCES roles(id),
+    permission_id INTEGER REFERENCES permissions(id),
+    PRIMARY KEY (role_id, permission_id)
+);
+
+CREATE TABLE user_accounts_join (
+    PRIMARY KEY (user_id, account_id),
+    user_id uuid not null,
+    account_id uuid not null,
+    role_id SERIAL not null,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (account_id) REFERENCES accounts(id),
+    FOREIGN KEY (role_id) REFERENCES roles(id)
 );
 
 CREATE TABLE sessions (
@@ -108,6 +134,7 @@ CREATE TABLE configurations_voices_banned_join (
     FOREIGN KEY (configuration_id) REFERENCES configurations(id),
     FOREIGN KEY (voice_id) REFERENCES voices(id)
 );
+
 
 -- +goose StatementEnd
 -- +goose Down

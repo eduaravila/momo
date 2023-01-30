@@ -18,4 +18,4 @@ var TWITCH_OAUTH2_URL string = os.Getenv("TWITCH_OAUTH2_URL")
 
 // TWITCH_REDIRECT_URI is the url to redirect to after auth
 
-var TWITCH_CLIENT_SECRET string = os.Getenv("TWITCH_CLIENT_SECRET")
+var TWITCH_APPLICATION_CLIENT_SECRET string = os.Getenv("TWITCH_APPLICATION_CLIENT_SECRET")

@@ -6,7 +6,7 @@ import (
 	"io"
 	"net/http"
 
-	urls "github.com/eduaravila/momo/auth/constant"
+	urls "github.com/eduaravila/momo/apps/auth/constant"
 )
 
 type TokenBody struct {
@@ -17,13 +17,21 @@ type TokenBody struct {
 	RedirectURI  string `json:"redirect_uri"`
 }
 
+type TokenResponse struct {
+	access_token  string `json:"access_token"`
+	refresh_token string `json:"refresh_token"`
+	expires_in    int    `json:"expires_in"`
+	token_type    string `json:"token_type"`
+	scope         string `json:"scope"`
+}
+
 func GetToken(w http.ResponseWriter, r *http.Request) {
 	queryparams := r.URL.Query()
 	code := queryparams.Get("code")
 
 	body := TokenBody{
 		ClientID:     urls.TWITCH_APPLICATION_CLIEND_ID,
-		ClientSecret: urls.TWITCH_CLIENT_SECRET,
+		ClientSecret: urls.TWITCH_APPLICATION_CLIENT_SECRET,
 		Code:         code,
 		GrantType:    "authorization_code",
 		RedirectURI:  urls.DASHBOARD_APP_URL,
@@ -34,13 +42,17 @@ func GetToken(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	_, err = Post(urls.TWITCH_OAUTH2_URL, bytes.NewReader(jsonBody))
 
+	res, err := Post(urls.TWITCH_OAUTH2_URL, bytes.NewReader(jsonBody))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusUnauthorized)
 	}
 
-	http.Redirect(w, r, urls.DASHBOARD_APP_URL, http.StatusFound)
+	if res.StatusCode != http.StatusOK {
+		http.Redirect(w, r, urls.DASHBOARD_APP_URL, http.StatusUnauthorized)
+	}
+
+	http.Redirect(w, r, urls.DASHBOARD_APP_URL, http.StatusCreated)
 }
 
 // make a post request to a generic url with a body

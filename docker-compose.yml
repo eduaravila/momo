@@ -1,11 +1,12 @@
 # docker-compose file to run golang server
 version: '3'
 services:
-  lister_development:
+  auth:
     build:
-      context: ./apps/auth
+      dockerfile: ./apps/auth/Dockerfile
+      context: .
       target: dev
-    container_name: auth_development    
+    container_name: auth_app
     hostname: auth_api
     environment:
       - ENV=development
@@ -13,8 +14,7 @@ services:
     env_file:
       - ./apps/auth/.env.development.local
     volumes:
-      - ./apps/auth:/auth/src/app
-    working_dir: /app/src/app
+      - ./apps/auth:/auth/src
     ports:
       - "8080:8080"
     command: sh -c "air -c .air.toml"
@@ -42,7 +42,7 @@ services:
       - postgres
     depends_on:
       - postgres
-
+    
 volumes:
   postgresdata:
     driver: local
