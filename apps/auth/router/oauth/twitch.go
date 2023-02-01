@@ -1,4 +1,4 @@
-package twitch
+package oauth
 
 import (
 	"bytes"
@@ -6,7 +6,9 @@ import (
 	"io"
 	"net/http"
 
-	urls "github.com/eduaravila/momo/apps/auth/constant"
+	"github.com/eduaravila/momo/apps/auth/config"
+	"github.com/eduaravila/momo/apps/auth/model/user"
+	"github.com/eduaravila/momo/apps/auth/url"
 )
 
 type TokenBody struct {
@@ -25,16 +27,24 @@ type TokenResponse struct {
 	scope         string `json:"scope"`
 }
 
-func GetToken(w http.ResponseWriter, r *http.Request) {
+type TwitchRouter struct {
+	env *config.Env
+}
+
+func NewTwitchRouter(env *config.Env) *TwitchRouter {
+	return &TwitchRouter{env: env}
+}
+
+func (t *TwitchRouter) GetToken(w http.ResponseWriter, r *http.Request) {
 	queryparams := r.URL.Query()
 	code := queryparams.Get("code")
 
 	body := TokenBody{
-		ClientID:     urls.TWITCH_APPLICATION_CLIEND_ID,
-		ClientSecret: urls.TWITCH_APPLICATION_CLIENT_SECRET,
+		ClientID:     url.TWITCH_APPLICATION_CLIEND_ID,
+		ClientSecret: url.TWITCH_APPLICATION_CLIENT_SECRET,
 		Code:         code,
 		GrantType:    "authorization_code",
-		RedirectURI:  urls.DASHBOARD_APP_URL,
+		RedirectURI:  url.DASHBOARD_APP_URL,
 	}
 
 	// struct to io.Reader
@@ -43,16 +53,23 @@ func GetToken(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
-	res, err := Post(urls.TWITCH_OAUTH2_URL, bytes.NewReader(jsonBody))
+	res, err := Post(url.TWITCH_OAUTH2_URL, bytes.NewReader(jsonBody))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusUnauthorized)
 	}
 
 	if res.StatusCode != http.StatusOK {
-		http.Redirect(w, r, urls.DASHBOARD_APP_URL, http.StatusUnauthorized)
+		http.Redirect(w, r, url.DASHBOARD_APP_URL, http.StatusUnauthorized)
 	}
 
-	http.Redirect(w, r, urls.DASHBOARD_APP_URL, http.StatusCreated)
+	// add cookie to the response
+	http.SetCookie(w, &http.Cookie{
+		HttpOnly: true,
+		Name:     "qid",
+	})
+	user.Create(t.env.Queries)
+	http.Redirect(w, r, url.DASHBOARD_APP_URL, http.StatusCreated)
+
 }
 
 // make a post request to a generic url with a body
