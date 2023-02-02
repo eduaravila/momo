@@ -4,11 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"io"
+	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/eduaravila/momo/apps/auth/config"
 	"github.com/eduaravila/momo/apps/auth/model/user"
 	"github.com/eduaravila/momo/apps/auth/url"
+	"github.com/golang-jwt/jwt/v4"
 )
 
 type TokenBody struct {
@@ -27,15 +30,15 @@ type TokenResponse struct {
 	scope         string `json:"scope"`
 }
 
-type TwitchRouter struct {
+type TwitchHandler struct {
 	env *config.Env
 }
 
-func NewTwitchRouter(env *config.Env) *TwitchRouter {
-	return &TwitchRouter{env: env}
+func NewTwitchHandler(env *config.Env) *TwitchHandler {
+	return &TwitchHandler{env: env}
 }
 
-func (t *TwitchRouter) GetToken(w http.ResponseWriter, r *http.Request) {
+func (t *TwitchHandler) GetToken(w http.ResponseWriter, r *http.Request) {
 	queryparams := r.URL.Query()
 	code := queryparams.Get("code")
 
@@ -62,13 +65,39 @@ func (t *TwitchRouter) GetToken(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, url.DASHBOARD_APP_URL, http.StatusUnauthorized)
 	}
 
-	// add cookie to the response
+	uid, err := user.Create(t.env.Queries)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	exp := time.Now().Add(1 * time.Hour)
+	token := jwt.NewWithClaims(jwt.SigningMethodES256, jwt.MapClaims{
+		"uid": uid.String(),
+		"exp": exp.Unix(),
+		"iat": time.Now().Unix(),
+	})
+	key, err := ioutil.ReadFile(".keys/private.gem")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	decodedKey, err := jwt.ParseECPrivateKeyFromPEM(key)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+	session, err := token.SignedString(decodedKey)
+	// session cookie
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
 	http.SetCookie(w, &http.Cookie{
 		HttpOnly: true,
-		Name:     "qid",
+		SameSite: http.SameSiteLaxMode,
+		Name:     "session",
+		Value:    session,
+		Path:     "/",
 	})
-	user.Create(t.env.Queries)
-	http.Redirect(w, r, url.DASHBOARD_APP_URL, http.StatusCreated)
+
+	http.Redirect(w, r, url.DASHBOARD_APP_URL, http.StatusFound)
 
 }
 

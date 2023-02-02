@@ -11,8 +11,8 @@ import (
 func Routes(env *config.Env) *http.ServeMux {
 	mux := router.NewHandler(http.NewServeMux())
 
-	twitchRouter := oauth.NewTwitchRouter(env)
+	twitchHandler := oauth.NewTwitchHandler(env)
 
-	mux.Get("/oauth/twitch/callback", twitchRouter.GetToken)
+	mux.Get("/oauth/twitch/callback", twitchHandler.GetToken)
 	return mux.GetServeMux()
 }

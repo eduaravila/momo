@@ -14,7 +14,7 @@ services:
     env_file:
       - ./apps/auth/.env.development.local
     volumes:
-      - ./apps/auth:/auth/src
+      - ./apps/auth:/github.com/eduaravila/momo/apps/auth
     ports:
       - "8080:8080"
     command: sh -c "air -c .air.toml"
