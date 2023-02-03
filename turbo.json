@@ -27,15 +27,15 @@
         "NEXT_PUBLIC_AUTH_SERVER_API_URL",
         "NEXT_PUBLIC_TWITCH_APPLICATION_CLIEND_ID",
         "NEXT_PUBLIC_TWITCH_APPLICATION_REDIRECT_PATH",
-        "NEXT_PUBLIC_TWITCH_APPLICATION_SCOPES"
+        "NEXT_PUBLIC_TWITCH_APPLICATION_SCOPES",
+        "NEXT_PUBLIC_TWITCH_APPLICATION_CLAIMS"
       ],
       "cache": false,
-      
       "outputs": [
         ".next/**"
       ]
     },
-    "listener#dev:watch":{
+    "listener#dev:watch": {
       "cache": false
     }
   }

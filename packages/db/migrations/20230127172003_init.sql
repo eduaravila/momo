@@ -22,7 +22,7 @@ CREATE TABLE files (
     created_at timestamp not null default now()
 );
 
-CREATE TABLE platforms (
+CREATE TABLE issuers (
     name varchar(255) primary key not null,
     is_active boolean not null default true,
     created_at timestamp not null default now(),
@@ -30,17 +30,19 @@ CREATE TABLE platforms (
 );
 
 CREATE TABLE accounts (
-    id varchar(255) primary key not null, 
+    id uuid primary key not null,
     name varchar(255) not null,
     picture varchar(255) not null,
+    email varchar(255) not null,
+    sub varchar(255) not null unique,
     prefered_username varchar(255) not null,
     access_token varchar(255) not null,
     refresh_token varchar(255) not null,
-    platform_id varchar(255) not null,
+    iss varchar(255) not null,
     created_at timestamp not null default now(),
     expired_at timestamp not null,
     scope varchar(255) not null,
-    FOREIGN KEY (platform_id) REFERENCES platforms(name)
+    FOREIGN KEY (iss) REFERENCES issuers(name)
 );
 
 CREATE TABLE roles (
@@ -64,7 +66,7 @@ CREATE TABLE role_permissions (
 CREATE TABLE user_accounts_join (
     PRIMARY KEY (user_id, account_id),
     user_id uuid not null,
-    account_id varchar(255) not null,
+    account_id uuid not null,
     role_id SERIAL not null,
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (account_id) REFERENCES accounts(id),
@@ -87,7 +89,7 @@ CREATE TABLE overlays (
     id uuid primary key not null,
     is_banned boolean not null default false,
     is_enabled boolean not null default true,
-    account_id  varchar(255) not null,
+    account_id uuid not null,
     created_at timestamp not null default now(),
     updated_at timestamp not null default now(),
     FOREIGN KEY (account_id) REFERENCES accounts(id)
@@ -95,7 +97,7 @@ CREATE TABLE overlays (
 
 CREATE TABLE messages (
     id uuid primary key not null,
-    account_id varchar(255) not null,
+    account_id uuid not null,
     message text not null,
     created_at timestamp not null default now(),
     audio_file_id uuid,
@@ -106,7 +108,7 @@ CREATE TABLE messages (
 
 CREATE TABLE configurations (
     id uuid primary key not null,
-    account_id varchar(255) not null,
+    account_id uuid not null,
     max_message_length integer not null,
     min_amount_tip integer not null,
     min_point_tip integer not null,
@@ -154,7 +156,7 @@ DROP TABLE voices cascade;
 
 DROP TABLE configurations_voices_banned_join;
 
-DROP TABLE platforms;
+DROP TABLE issuers cascade;
 
 DROP TABLE files;
 

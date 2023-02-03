@@ -15,14 +15,15 @@ type Account struct {
 	ID               uuid.UUID
 	Name             string
 	Picture          string
+	Email            string
+	Sub              string
 	PreferedUsername string
 	AccessToken      string
 	RefreshToken     string
-	PlatformID       string
+	Iss              string
 	CreatedAt        time.Time
 	ExpiredAt        time.Time
 	Scope            string
-	Sub              string
 }
 
 type Configuration struct {
@@ -57,6 +58,13 @@ type File struct {
 	CreatedAt time.Time
 }
 
+type Issuer struct {
+	Name      string
+	IsActive  bool
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
 type Message struct {
 	ID          uuid.UUID
 	AccountID   uuid.UUID
@@ -79,13 +87,6 @@ type Permission struct {
 	ID          int32
 	Name        string
 	Description sql.NullString
-}
-
-type Platform struct {
-	Name      string
-	IsActive  bool
-	CreatedAt time.Time
-	UpdatedAt time.Time
 }
 
 type Role struct {
