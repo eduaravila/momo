@@ -7,7 +7,6 @@ package queries
 
 import (
 	"context"
-	"time"
 
 	"github.com/google/uuid"
 )
@@ -23,19 +22,32 @@ func (q *Queries) CountUserAccountsJoins(ctx context.Context) (int64, error) {
 	return count, err
 }
 
-const createUserAccountsJoin = `-- name: CreateUserAccountsJoin :exec
-INSERT INTO user_accounts_join (user_id, account_id, role_id) VALUES ($1, $2, $3) on conflict (user_id, account_id) do update set role_id = $3
+const createUserAccountsJoin = `-- name: CreateUserAccountsJoin :one
+INSERT INTO user_accounts_join (user_id, account_id, account_manage_id, role_id) VALUES ($1, $2, $3, $4) on conflict (user_id, account_id) do nothing RETURNING user_id, account_id, account_manage_id, role_id
 `
 
 type CreateUserAccountsJoinParams struct {
-	UserID    uuid.UUID
-	AccountID uuid.UUID
-	RoleID    int32
+	UserID          uuid.UUID
+	AccountID       uuid.UUID
+	AccountManageID uuid.UUID
+	RoleID          int32
 }
 
-func (q *Queries) CreateUserAccountsJoin(ctx context.Context, arg CreateUserAccountsJoinParams) error {
-	_, err := q.db.ExecContext(ctx, createUserAccountsJoin, arg.UserID, arg.AccountID, arg.RoleID)
-	return err
+func (q *Queries) CreateUserAccountsJoin(ctx context.Context, arg CreateUserAccountsJoinParams) (UserAccountsJoin, error) {
+	row := q.db.QueryRowContext(ctx, createUserAccountsJoin,
+		arg.UserID,
+		arg.AccountID,
+		arg.AccountManageID,
+		arg.RoleID,
+	)
+	var i UserAccountsJoin
+	err := row.Scan(
+		&i.UserID,
+		&i.AccountID,
+		&i.AccountManageID,
+		&i.RoleID,
+	)
+	return i, err
 }
 
 const deleteUserAccountsJoin = `-- name: DeleteUserAccountsJoin :exec
@@ -52,53 +64,8 @@ func (q *Queries) DeleteUserAccountsJoin(ctx context.Context, arg DeleteUserAcco
 	return err
 }
 
-const getAccountByAccountID = `-- name: GetAccountByAccountID :one
-SELECT id, name, picture, email, sub, prefered_username, access_token, refresh_token, iss, created_at, expired_at, scope, user_id, account_id, role_id FROM accounts INNER JOIN user_accounts_join ON accounts.id = user_accounts_join.account_id WHERE account_id = $1
-`
-
-type GetAccountByAccountIDRow struct {
-	ID               uuid.UUID
-	Name             string
-	Picture          string
-	Email            string
-	Sub              string
-	PreferedUsername string
-	AccessToken      string
-	RefreshToken     string
-	Iss              string
-	CreatedAt        time.Time
-	ExpiredAt        time.Time
-	Scope            string
-	UserID           uuid.UUID
-	AccountID        uuid.UUID
-	RoleID           int32
-}
-
-func (q *Queries) GetAccountByAccountID(ctx context.Context, accountID uuid.UUID) (GetAccountByAccountIDRow, error) {
-	row := q.db.QueryRowContext(ctx, getAccountByAccountID, accountID)
-	var i GetAccountByAccountIDRow
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.Picture,
-		&i.Email,
-		&i.Sub,
-		&i.PreferedUsername,
-		&i.AccessToken,
-		&i.RefreshToken,
-		&i.Iss,
-		&i.CreatedAt,
-		&i.ExpiredAt,
-		&i.Scope,
-		&i.UserID,
-		&i.AccountID,
-		&i.RoleID,
-	)
-	return i, err
-}
-
 const getUserAccountsJoin = `-- name: GetUserAccountsJoin :one
-SELECT user_id, account_id, role_id FROM user_accounts_join WHERE user_id = $1 AND account_id = $2
+SELECT user_id, account_id, account_manage_id, role_id FROM user_accounts_join WHERE user_id = $1 AND account_id = $2
 `
 
 type GetUserAccountsJoinParams struct {
@@ -109,57 +76,129 @@ type GetUserAccountsJoinParams struct {
 func (q *Queries) GetUserAccountsJoin(ctx context.Context, arg GetUserAccountsJoinParams) (UserAccountsJoin, error) {
 	row := q.db.QueryRowContext(ctx, getUserAccountsJoin, arg.UserID, arg.AccountID)
 	var i UserAccountsJoin
-	err := row.Scan(&i.UserID, &i.AccountID, &i.RoleID)
+	err := row.Scan(
+		&i.UserID,
+		&i.AccountID,
+		&i.AccountManageID,
+		&i.RoleID,
+	)
 	return i, err
 }
 
-const getUserAccountsJoinByUserID = `-- name: GetUserAccountsJoinByUserID :many
-SELECT user_id, account_id, role_id, id, name, picture, email, sub, prefered_username, access_token, refresh_token, iss, created_at, expired_at, scope FROM user_accounts_join INNER JOIN accounts ON user_accounts_join.account_id = accounts.id WHERE user_id = $1
+const getUserAccountsJoinByAccountID = `-- name: GetUserAccountsJoinByAccountID :many
+SELECT user_id, account_id, account_manage_id, role_id FROM user_accounts_join WHERE account_id = $1
 `
 
-type GetUserAccountsJoinByUserIDRow struct {
-	UserID           uuid.UUID
-	AccountID        uuid.UUID
-	RoleID           int32
-	ID               uuid.UUID
-	Name             string
-	Picture          string
-	Email            string
-	Sub              string
-	PreferedUsername string
-	AccessToken      string
-	RefreshToken     string
-	Iss              string
-	CreatedAt        time.Time
-	ExpiredAt        time.Time
-	Scope            string
+func (q *Queries) GetUserAccountsJoinByAccountID(ctx context.Context, accountID uuid.UUID) ([]UserAccountsJoin, error) {
+	rows, err := q.db.QueryContext(ctx, getUserAccountsJoinByAccountID, accountID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []UserAccountsJoin
+	for rows.Next() {
+		var i UserAccountsJoin
+		if err := rows.Scan(
+			&i.UserID,
+			&i.AccountID,
+			&i.AccountManageID,
+			&i.RoleID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
-func (q *Queries) GetUserAccountsJoinByUserID(ctx context.Context, userID uuid.UUID) ([]GetUserAccountsJoinByUserIDRow, error) {
+const getUserAccountsJoinByAccountManageID = `-- name: GetUserAccountsJoinByAccountManageID :many
+SELECT user_id, account_id, account_manage_id, role_id FROM user_accounts_join WHERE account_manage_id = $1
+`
+
+func (q *Queries) GetUserAccountsJoinByAccountManageID(ctx context.Context, accountManageID uuid.UUID) ([]UserAccountsJoin, error) {
+	rows, err := q.db.QueryContext(ctx, getUserAccountsJoinByAccountManageID, accountManageID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []UserAccountsJoin
+	for rows.Next() {
+		var i UserAccountsJoin
+		if err := rows.Scan(
+			&i.UserID,
+			&i.AccountID,
+			&i.AccountManageID,
+			&i.RoleID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUserAccountsJoinByRoleID = `-- name: GetUserAccountsJoinByRoleID :many
+SELECT user_id, account_id, account_manage_id, role_id FROM user_accounts_join WHERE role_id = $1
+`
+
+func (q *Queries) GetUserAccountsJoinByRoleID(ctx context.Context, roleID int32) ([]UserAccountsJoin, error) {
+	rows, err := q.db.QueryContext(ctx, getUserAccountsJoinByRoleID, roleID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []UserAccountsJoin
+	for rows.Next() {
+		var i UserAccountsJoin
+		if err := rows.Scan(
+			&i.UserID,
+			&i.AccountID,
+			&i.AccountManageID,
+			&i.RoleID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUserAccountsJoinByUserID = `-- name: GetUserAccountsJoinByUserID :many
+SELECT user_id, account_id, account_manage_id, role_id FROM user_accounts_join WHERE user_id = $1
+`
+
+func (q *Queries) GetUserAccountsJoinByUserID(ctx context.Context, userID uuid.UUID) ([]UserAccountsJoin, error) {
 	rows, err := q.db.QueryContext(ctx, getUserAccountsJoinByUserID, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetUserAccountsJoinByUserIDRow
+	var items []UserAccountsJoin
 	for rows.Next() {
-		var i GetUserAccountsJoinByUserIDRow
+		var i UserAccountsJoin
 		if err := rows.Scan(
 			&i.UserID,
 			&i.AccountID,
+			&i.AccountManageID,
 			&i.RoleID,
-			&i.ID,
-			&i.Name,
-			&i.Picture,
-			&i.Email,
-			&i.Sub,
-			&i.PreferedUsername,
-			&i.AccessToken,
-			&i.RefreshToken,
-			&i.Iss,
-			&i.CreatedAt,
-			&i.ExpiredAt,
-			&i.Scope,
 		); err != nil {
 			return nil, err
 		}
@@ -175,7 +214,7 @@ func (q *Queries) GetUserAccountsJoinByUserID(ctx context.Context, userID uuid.U
 }
 
 const listUserAccountsJoins = `-- name: ListUserAccountsJoins :many
-SELECT user_id, account_id, role_id FROM user_accounts_join
+SELECT user_id, account_id, account_manage_id, role_id FROM user_accounts_join
 `
 
 func (q *Queries) ListUserAccountsJoins(ctx context.Context) ([]UserAccountsJoin, error) {
@@ -187,7 +226,12 @@ func (q *Queries) ListUserAccountsJoins(ctx context.Context) ([]UserAccountsJoin
 	var items []UserAccountsJoin
 	for rows.Next() {
 		var i UserAccountsJoin
-		if err := rows.Scan(&i.UserID, &i.AccountID, &i.RoleID); err != nil {
+		if err := rows.Scan(
+			&i.UserID,
+			&i.AccountID,
+			&i.AccountManageID,
+			&i.RoleID,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -213,15 +257,4 @@ type UpdateUserAccountsJoinParams struct {
 func (q *Queries) UpdateUserAccountsJoin(ctx context.Context, arg UpdateUserAccountsJoinParams) error {
 	_, err := q.db.ExecContext(ctx, updateUserAccountsJoin, arg.UserID, arg.AccountID)
 	return err
-}
-
-const userAccountsJoinExistByAccountID = `-- name: UserAccountsJoinExistByAccountID :one
-SELECT EXISTS (SELECT 1 FROM user_accounts_join WHERE account_id = $1)
-`
-
-func (q *Queries) UserAccountsJoinExistByAccountID(ctx context.Context, accountID uuid.UUID) (bool, error) {
-	row := q.db.QueryRowContext(ctx, userAccountsJoinExistByAccountID, accountID)
-	var exists bool
-	err := row.Scan(&exists)
-	return exists, err
 }

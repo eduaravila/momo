@@ -23,6 +23,17 @@ func (q *Queries) AccountExistByEmail(ctx context.Context, email string) (bool, 
 	return exists, err
 }
 
+const accountExistById = `-- name: AccountExistById :one
+SELECT EXISTS (SELECT 1 FROM accounts WHERE id = $1)
+`
+
+func (q *Queries) AccountExistById(ctx context.Context, id uuid.UUID) (bool, error) {
+	row := q.db.QueryRowContext(ctx, accountExistById, id)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const accountExistBySub = `-- name: AccountExistBySub :one
 SELECT EXISTS (SELECT 1 FROM accounts WHERE sub = $1)
 `
@@ -46,74 +57,55 @@ func (q *Queries) CountAccounts(ctx context.Context) (int64, error) {
 }
 
 const createAccount = `-- name: CreateAccount :one
-INSERT INTO accounts (
-    id,
-    name,
-    picture,
-    email,
-    sub,
-    prefered_username,
-    access_token,
-    refresh_token,
-    iss,
-    expired_at,
-    scope
-) VALUES (
-    $1,
-    $2,
-    $3,
-    $4,
-    $5,
-    $6,
-    $7,
-    $8,
-    $9,
-    $10,
-    $11
-)ON CONFLICT (sub) DO UPDATE SET
-    name = $2,
-    picture = $3,
-    email = $4,
-    prefered_username = $6,
-    access_token = $7,
-    refresh_token = $8,
-    iss = $9,
-    expired_at = $10,
-    scope = $11 
-    RETURNING id
+INSERT INTO accounts (id, user_id, picture, email, prefered_username, access_token, refresh_token, iss, sub, expired_at, scope) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) ON CONFLICT (sub) DO UPDATE SET user_id = $2, picture = $3, email = $4, prefered_username = $5, access_token = $6, refresh_token = $7, iss = $8, sub = $9, expired_at = $10, scope = $11 
+RETURNING id, user_id, picture, email, prefered_username, access_token, refresh_token, iss, sub, created_at, updated_at, expired_at, scope
 `
 
 type CreateAccountParams struct {
 	ID               uuid.UUID
-	Name             string
+	UserID           uuid.UUID
 	Picture          string
 	Email            string
-	Sub              string
 	PreferedUsername string
 	AccessToken      string
 	RefreshToken     string
 	Iss              string
+	Sub              string
 	ExpiredAt        time.Time
 	Scope            string
 }
 
-func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (uuid.UUID, error) {
+func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (Account, error) {
 	row := q.db.QueryRowContext(ctx, createAccount,
 		arg.ID,
-		arg.Name,
+		arg.UserID,
 		arg.Picture,
 		arg.Email,
-		arg.Sub,
 		arg.PreferedUsername,
 		arg.AccessToken,
 		arg.RefreshToken,
 		arg.Iss,
+		arg.Sub,
 		arg.ExpiredAt,
 		arg.Scope,
 	)
-	var id uuid.UUID
-	err := row.Scan(&id)
-	return id, err
+	var i Account
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Picture,
+		&i.Email,
+		&i.PreferedUsername,
+		&i.AccessToken,
+		&i.RefreshToken,
+		&i.Iss,
+		&i.Sub,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ExpiredAt,
+		&i.Scope,
+	)
+	return i, err
 }
 
 const deleteAccount = `-- name: DeleteAccount :exec
@@ -126,7 +118,7 @@ func (q *Queries) DeleteAccount(ctx context.Context, id uuid.UUID) error {
 }
 
 const getAccount = `-- name: GetAccount :one
-SELECT id, name, picture, email, sub, prefered_username, access_token, refresh_token, iss, created_at, expired_at, scope FROM accounts WHERE id = $1
+SELECT id, user_id, picture, email, prefered_username, access_token, refresh_token, iss, sub, created_at, updated_at, expired_at, scope FROM accounts WHERE id = $1
 `
 
 func (q *Queries) GetAccount(ctx context.Context, id uuid.UUID) (Account, error) {
@@ -134,15 +126,41 @@ func (q *Queries) GetAccount(ctx context.Context, id uuid.UUID) (Account, error)
 	var i Account
 	err := row.Scan(
 		&i.ID,
-		&i.Name,
+		&i.UserID,
 		&i.Picture,
 		&i.Email,
-		&i.Sub,
 		&i.PreferedUsername,
 		&i.AccessToken,
 		&i.RefreshToken,
 		&i.Iss,
+		&i.Sub,
 		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ExpiredAt,
+		&i.Scope,
+	)
+	return i, err
+}
+
+const getAccountBySub = `-- name: GetAccountBySub :one
+SELECT id, user_id, picture, email, prefered_username, access_token, refresh_token, iss, sub, created_at, updated_at, expired_at, scope FROM accounts WHERE sub = $1
+`
+
+func (q *Queries) GetAccountBySub(ctx context.Context, sub string) (Account, error) {
+	row := q.db.QueryRowContext(ctx, getAccountBySub, sub)
+	var i Account
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Picture,
+		&i.Email,
+		&i.PreferedUsername,
+		&i.AccessToken,
+		&i.RefreshToken,
+		&i.Iss,
+		&i.Sub,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 		&i.ExpiredAt,
 		&i.Scope,
 	)
@@ -150,7 +168,7 @@ func (q *Queries) GetAccount(ctx context.Context, id uuid.UUID) (Account, error)
 }
 
 const getAccountsByIDs = `-- name: GetAccountsByIDs :many
-SELECT id, name, picture, email, sub, prefered_username, access_token, refresh_token, iss, created_at, expired_at, scope FROM accounts WHERE id = ANY($1)
+SELECT id, user_id, picture, email, prefered_username, access_token, refresh_token, iss, sub, created_at, updated_at, expired_at, scope FROM accounts WHERE id = ANY($1)
 `
 
 func (q *Queries) GetAccountsByIDs(ctx context.Context, id uuid.UUID) ([]Account, error) {
@@ -164,15 +182,16 @@ func (q *Queries) GetAccountsByIDs(ctx context.Context, id uuid.UUID) ([]Account
 		var i Account
 		if err := rows.Scan(
 			&i.ID,
-			&i.Name,
+			&i.UserID,
 			&i.Picture,
 			&i.Email,
-			&i.Sub,
 			&i.PreferedUsername,
 			&i.AccessToken,
 			&i.RefreshToken,
 			&i.Iss,
+			&i.Sub,
 			&i.CreatedAt,
+			&i.UpdatedAt,
 			&i.ExpiredAt,
 			&i.Scope,
 		); err != nil {
@@ -190,7 +209,7 @@ func (q *Queries) GetAccountsByIDs(ctx context.Context, id uuid.UUID) ([]Account
 }
 
 const getAccountsByISS = `-- name: GetAccountsByISS :many
-SELECT id, name, picture, email, sub, prefered_username, access_token, refresh_token, iss, created_at, expired_at, scope FROM accounts WHERE iss = $1
+SELECT id, user_id, picture, email, prefered_username, access_token, refresh_token, iss, sub, created_at, updated_at, expired_at, scope FROM accounts WHERE iss = $1
 `
 
 func (q *Queries) GetAccountsByISS(ctx context.Context, iss string) ([]Account, error) {
@@ -204,15 +223,16 @@ func (q *Queries) GetAccountsByISS(ctx context.Context, iss string) ([]Account, 
 		var i Account
 		if err := rows.Scan(
 			&i.ID,
-			&i.Name,
+			&i.UserID,
 			&i.Picture,
 			&i.Email,
-			&i.Sub,
 			&i.PreferedUsername,
 			&i.AccessToken,
 			&i.RefreshToken,
 			&i.Iss,
+			&i.Sub,
 			&i.CreatedAt,
+			&i.UpdatedAt,
 			&i.ExpiredAt,
 			&i.Scope,
 		); err != nil {
@@ -229,8 +249,85 @@ func (q *Queries) GetAccountsByISS(ctx context.Context, iss string) ([]Account, 
 	return items, nil
 }
 
+const getAccountsBySub = `-- name: GetAccountsBySub :one
+SELECT id, user_id, picture, email, prefered_username, access_token, refresh_token, iss, sub, created_at, updated_at, expired_at, scope FROM accounts WHERE sub = $1
+`
+
+func (q *Queries) GetAccountsBySub(ctx context.Context, sub string) (Account, error) {
+	row := q.db.QueryRowContext(ctx, getAccountsBySub, sub)
+	var i Account
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Picture,
+		&i.Email,
+		&i.PreferedUsername,
+		&i.AccessToken,
+		&i.RefreshToken,
+		&i.Iss,
+		&i.Sub,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ExpiredAt,
+		&i.Scope,
+	)
+	return i, err
+}
+
+const getAccountsByUserID = `-- name: GetAccountsByUserID :many
+SELECT id, user_id, picture, email, prefered_username, access_token, refresh_token, iss, sub, created_at, updated_at, expired_at, scope FROM accounts WHERE user_id = $1
+`
+
+func (q *Queries) GetAccountsByUserID(ctx context.Context, userID uuid.UUID) ([]Account, error) {
+	rows, err := q.db.QueryContext(ctx, getAccountsByUserID, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Account
+	for rows.Next() {
+		var i Account
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Picture,
+			&i.Email,
+			&i.PreferedUsername,
+			&i.AccessToken,
+			&i.RefreshToken,
+			&i.Iss,
+			&i.Sub,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.ExpiredAt,
+			&i.Scope,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUserBySub = `-- name: GetUserBySub :one
+SELECT id, created_at, updated_at FROM users WHERE id = (SELECT user_id FROM accounts WHERE sub = $1)
+`
+
+func (q *Queries) GetUserBySub(ctx context.Context, sub string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserBySub, sub)
+	var i User
+	err := row.Scan(&i.ID, &i.CreatedAt, &i.UpdatedAt)
+	return i, err
+}
+
 const listAccounts = `-- name: ListAccounts :many
-SELECT id, name, picture, email, sub, prefered_username, access_token, refresh_token, iss, created_at, expired_at, scope FROM accounts
+SELECT id, user_id, picture, email, prefered_username, access_token, refresh_token, iss, sub, created_at, updated_at, expired_at, scope FROM accounts
 `
 
 func (q *Queries) ListAccounts(ctx context.Context) ([]Account, error) {
@@ -244,15 +341,16 @@ func (q *Queries) ListAccounts(ctx context.Context) ([]Account, error) {
 		var i Account
 		if err := rows.Scan(
 			&i.ID,
-			&i.Name,
+			&i.UserID,
 			&i.Picture,
 			&i.Email,
-			&i.Sub,
 			&i.PreferedUsername,
 			&i.AccessToken,
 			&i.RefreshToken,
 			&i.Iss,
+			&i.Sub,
 			&i.CreatedAt,
+			&i.UpdatedAt,
 			&i.ExpiredAt,
 			&i.Scope,
 		); err != nil {

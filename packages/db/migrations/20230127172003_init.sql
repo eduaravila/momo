@@ -3,7 +3,7 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE users (
-    id uuid primary key not null,    
+    id uuid primary key not null,   
     created_at timestamp not null default now(),
     updated_at timestamp not null default now()
 );
@@ -29,21 +29,24 @@ CREATE TABLE issuers (
     updated_at timestamp not null default now()
 );
 
+
 CREATE TABLE accounts (
     id uuid primary key not null,
-    name varchar(255) not null,
+    user_id uuid not null,
     picture varchar(255) not null,
     email varchar(255) not null,
-    sub varchar(255) not null unique,
     prefered_username varchar(255) not null,
     access_token varchar(255) not null,
     refresh_token varchar(255) not null,
     iss varchar(255) not null,
+    sub varchar(255) not null unique,
     created_at timestamp not null default now(),
+    updated_at timestamp not null default now(),
     expired_at timestamp not null,
     scope varchar(255) not null,
-    FOREIGN KEY (iss) REFERENCES issuers(name)
+    FOREIGN KEY (user_id) REFERENCES users(id)
 );
+
 
 CREATE TABLE roles (
     id SERIAL PRIMARY KEY,
@@ -67,11 +70,14 @@ CREATE TABLE user_accounts_join (
     PRIMARY KEY (user_id, account_id),
     user_id uuid not null,
     account_id uuid not null,
+    account_manage_id uuid not null,
     role_id SERIAL not null,
     FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (account_id) REFERENCES accounts(id),
-    FOREIGN KEY (role_id) REFERENCES roles(id)
+    FOREIGN KEY (account_id) REFERENCES accounts(id),    
+    FOREIGN KEY (role_id) REFERENCES roles(id),
+    FOREIGN KEY (account_manage_id) REFERENCES accounts(id)
 );
+
 
 CREATE TABLE sessions (
     id uuid primary key not null,

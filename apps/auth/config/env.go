@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"database/sql"
 	"os"
 
@@ -15,3 +16,5 @@ type Env struct {
 var TWITCH_APPLICATION_CLIEND_ID string = os.Getenv("TWITCH_APPLICATION_CLIEND_ID")
 
 var TWITCH_APPLICATION_CLIENT_SECRET string = os.Getenv("TWITCH_APPLICATION_CLIENT_SECRET")
+
+var Ctx = context.Background()

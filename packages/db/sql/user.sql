@@ -1,5 +1,5 @@
--- name: CreateUser :exec 
-INSERT INTO users (id) VALUES ($1) RETURNING id;
+-- name: CreateUser :one 
+INSERT INTO users (id) VALUES ($1) on conflict (id) do nothing RETURNING *;
 
 -- name: GetUser :one
 SELECT * FROM users WHERE id = $1;

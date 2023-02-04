@@ -22,13 +22,15 @@ func (q *Queries) CountUsers(ctx context.Context) (int64, error) {
 	return count, err
 }
 
-const createUser = `-- name: CreateUser :exec
-INSERT INTO users (id) VALUES ($1) RETURNING id
+const createUser = `-- name: CreateUser :one
+INSERT INTO users (id) VALUES ($1) on conflict (id) do nothing RETURNING id, created_at, updated_at
 `
 
-func (q *Queries) CreateUser(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.ExecContext(ctx, createUser, id)
-	return err
+func (q *Queries) CreateUser(ctx context.Context, id uuid.UUID) (User, error) {
+	row := q.db.QueryRowContext(ctx, createUser, id)
+	var i User
+	err := row.Scan(&i.ID, &i.CreatedAt, &i.UpdatedAt)
+	return i, err
 }
 
 const deleteUser = `-- name: DeleteUser :exec

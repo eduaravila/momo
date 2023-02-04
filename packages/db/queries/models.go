@@ -13,15 +13,16 @@ import (
 
 type Account struct {
 	ID               uuid.UUID
-	Name             string
+	UserID           uuid.UUID
 	Picture          string
 	Email            string
-	Sub              string
 	PreferedUsername string
 	AccessToken      string
 	RefreshToken     string
 	Iss              string
+	Sub              string
 	CreatedAt        time.Time
+	UpdatedAt        time.Time
 	ExpiredAt        time.Time
 	Scope            string
 }
@@ -118,9 +119,10 @@ type User struct {
 }
 
 type UserAccountsJoin struct {
-	UserID    uuid.UUID
-	AccountID uuid.UUID
-	RoleID    int32
+	UserID          uuid.UUID
+	AccountID       uuid.UUID
+	AccountManageID uuid.UUID
+	RoleID          int32
 }
 
 type Voice struct {

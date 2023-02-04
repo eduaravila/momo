@@ -6,12 +6,14 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/eduaravila/momo/apps/auth/config"
-	"github.com/eduaravila/momo/apps/auth/model/user"
 	"github.com/eduaravila/momo/apps/auth/url"
+	"github.com/eduaravila/momo/packages/db/queries"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/google/uuid"
 )
 
 type TokenBody struct {
@@ -30,6 +32,18 @@ type TokenResponse struct {
 	Scope        []string `json:"scope"`
 }
 
+type UserinfoRespose struct {
+	Aud              string    `json:"aud"`
+	Exp              int64     `json:"exp"`
+	Iat              int64     `json:"iat"`
+	Iss              string    `json:"iss"`
+	Sub              string    `json:"sub"`
+	Email            string    `json:"email"`
+	EmailVerified    bool      `json:"email_verified"`
+	Picture          string    `json:"picture"`
+	PreferedUsername string    `json:"preferred_username"`
+	UpdatedAt        time.Time `json:"updated_at"`
+}
 type TwitchHandler struct {
 	env *config.Env
 }
@@ -75,25 +89,48 @@ func (t *TwitchHandler) GetToken(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
+	// get user info
 	userInfo, err := Get(PostParams{
 		Url: url.TWITCH_OAUTH2_USERINFO,
 		Headers: [][]string{
 			{"Authorization", "Bearer " + tokenRespose.AccessToken},
 		},
 	})
+	var userinfoRespose UserinfoRespose
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	_, err = io.ReadAll(userInfo.Body)
+	err = json.NewDecoder(userInfo.Body).Decode(&userinfoRespose)
+	if err != nil {
+		http.Redirect(w, r, url.DASHBOARD_APP_URL, http.StatusInternalServerError)
+	}
+	acc, accountExist := t.env.Queries.GetAccountsBySub(r.Context(), userinfoRespose.Sub)
+	uid := acc.ID
+	if accountExist != nil {
+		uid = uuid.New()
+		t.env.Queries.CreateUser(r.Context(), uid)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 
-	uid, err := user.Create(t.env.Queries)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
+	acc, _ = t.env.Queries.CreateAccount(r.Context(), queries.CreateAccountParams{
+		AccessToken:      tokenRespose.AccessToken,
+		RefreshToken:     tokenRespose.RefreshToken,
+		ExpiredAt:        time.Unix(int64(tokenRespose.ExpiresIn), 0),
+		Email:            userinfoRespose.Email,
+		Picture:          userinfoRespose.Picture,
+		Iss:              userinfoRespose.Iss,
+		PreferedUsername: userinfoRespose.PreferedUsername,
+		ID:               uuid.New(),
+		Scope:            strings.Join(tokenRespose.Scope, " "),
+		Sub:              userinfoRespose.Sub,
+		UserID:           uid,
+	})
 
 	exp := time.Now().Add(1 * time.Hour)
 	token := jwt.NewWithClaims(jwt.SigningMethodES256, jwt.MapClaims{
-		"uid": uid.String(),
+		"uid": uid,
 		"exp": exp.Unix(),
 		"iat": time.Now().Unix(),
 	})
@@ -110,7 +147,14 @@ func (t *TwitchHandler) GetToken(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-
+	t.env.Queries.CreateSession(r.Context(), queries.CreateSessionParams{
+		ID:           uuid.New(),
+		ExpiredAt:    exp,
+		UserAgent:    r.UserAgent(),
+		UserID:       uid,
+		SessionToken: session,
+		IpAddress:    r.RemoteAddr,
+	})
 	http.SetCookie(w, &http.Cookie{
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
