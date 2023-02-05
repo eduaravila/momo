@@ -7,8 +7,8 @@ import (
 	jwt "github.com/golang-jwt/jwt/v4"
 )
 
-type Token struct {
-	Claims jwt.RegisteredClaims
+type SessionToken struct {
+	Token *jwt.Token
 }
 
 func DefaultClaimsForSession(id string) jwt.RegisteredClaims {
@@ -21,21 +21,25 @@ func DefaultClaimsForSession(id string) jwt.RegisteredClaims {
 	}
 }
 
-func NewToken() *Token {
-	return &Token{}
+func (t *SessionToken) Claims() jwt.RegisteredClaims {
+	return t.Token.Claims.(jwt.RegisteredClaims)
 }
 
-func (t *Token) SetClaims(claims jwt.RegisteredClaims) *Token {
-	t.Claims = claims
+func NewSessionToken(subject string) *SessionToken {
+	return &SessionToken{
+		jwt.NewWithClaims(jwt.SigningMethodES256, DefaultClaimsForSession(subject)),
+	}
+}
+
+func (t *SessionToken) SetClaims(claims jwt.RegisteredClaims) *SessionToken {
+	t.Token.Claims = claims
 	return t
 }
 
-func (t *Token) Generate() (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, t.Claims)
+func (t *SessionToken) Sign() (string, error) {
 	decodedKey, err := jwt.ParseECPrivateKeyFromPEM([]byte(os.Getenv("JWT_PRIVATE_KEY")))
 	if err != nil {
 		return "", err
 	}
-
-	return token.SignedString(decodedKey)
+	return t.Token.SignedString(decodedKey)
 }

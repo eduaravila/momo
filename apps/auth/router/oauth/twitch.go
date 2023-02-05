@@ -40,20 +40,18 @@ func (t *TwitchHandler) Callback(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	token := factory.NewToken().SetClaims(
-		factory.DefaultClaimsForSession(ua.User.ID.String()),
-	)
-	session, err := token.Generate()
+	token := factory.NewSessionToken(ua.User.ID.String())
+	tokenString, err := token.Sign()
 	if err != nil {
 		return err
 	}
 
 	t.env.Queries.CreateSession(context.Background(), queries.CreateSessionParams{
 		ID:           uuid.New(),
-		ExpiredAt:    token.Claims.ExpiresAt.Time,
+		ExpiredAt:    token.Claims().ExpiresAt.Time,
 		UserAgent:    r.UserAgent(),
 		UserID:       ua.User.ID,
-		SessionToken: session,
+		SessionToken: tokenString,
 		IpAddress:    r.RemoteAddr,
 	})
 
@@ -61,7 +59,7 @@ func (t *TwitchHandler) Callback(w http.ResponseWriter, r *http.Request) error {
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 		Name:     "session",
-		Value:    session,
+		Value:    tokenString,
 		Path:     "/",
 	})
 
