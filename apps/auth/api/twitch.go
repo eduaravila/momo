@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/eduaravila/momo/apps/auth/config"
@@ -12,7 +13,34 @@ import (
 	"github.com/eduaravila/momo/apps/auth/utils"
 )
 
-func GetToken(code string) (*model.TokenResponse, error) {
+type Config interface {
+	SetBaseURL(baseurl string)
+	GetBaseURL() string
+}
+
+type ApiConfig struct {
+	BaseURL string
+}
+
+func (a *ApiConfig) SetBaseURL(baseurl string) {
+	a.BaseURL = baseurl
+}
+
+func (a *ApiConfig) GetBaseURL() string {
+	return a.BaseURL
+}
+
+type TwitchApi struct {
+	Config
+}
+
+// Paths for the Twitch API
+const (
+	token_path    = "/oauth2/token"    // POST
+	userinfo_path = "/oauth2/userinfo" // GET
+)
+
+func (t *TwitchApi) GetToken(code string) (*model.TokenResponse, error) {
 
 	body := model.TokenBody{
 		ClientID:     config.TWITCH_APPLICATION_CLIEND_ID,
@@ -29,7 +57,7 @@ func GetToken(code string) (*model.TokenResponse, error) {
 	}
 
 	res, err := utils.Post(utils.RequestParams{
-		Url:  url.TWITCH_OAUTH2_TOKEN,
+		Url:  fmt.Sprintf("%s%s", t.Config.GetBaseURL(), token_path),
 		Body: bytes.NewReader(jsonBody),
 	})
 
@@ -48,11 +76,11 @@ func GetToken(code string) (*model.TokenResponse, error) {
 	return &tokenRespose, nil
 }
 
-func GetUserinfo(oidcToken *model.TokenResponse) (*model.UserinfoRespose, error) {
+func (t *TwitchApi) GetOidcUserInfo(oidcToken *model.TokenResponse) (*model.UserinfoRespose, error) {
 
 	// get user info
 	userInfo, err := utils.Get(utils.RequestParams{
-		Url: url.TWITCH_OAUTH2_USERINFO,
+		Url: fmt.Sprintf("%s%s", url.TWITCH_API_URL, userinfo_path),
 		Headers: [][]string{
 			{"Authorization", "Bearer " + oidcToken.AccessToken},
 		},
@@ -69,3 +97,11 @@ func GetUserinfo(oidcToken *model.TokenResponse) (*model.UserinfoRespose, error)
 	}
 	return &userInfoRespose, nil
 }
+
+func NewTwitchApi(config Config) *TwitchApi {
+	return &TwitchApi{
+		Config: config,
+	}
+}
+
+var TwitchApiWithConfig = NewTwitchApi(&ApiConfig{BaseURL: url.TWITCH_API_URL})

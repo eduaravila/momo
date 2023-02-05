@@ -25,11 +25,12 @@ func (t *TwitchHandler) Callback(w http.ResponseWriter, r *http.Request) error {
 	queryparams := r.URL.Query()
 	code := queryparams.Get("code")
 
-	oidcToken, err := api.GetToken(code)
+	oidcToken, err := api.TwitchApiWithConfig.GetToken(code)
+
 	if err != nil {
 		return err
 	}
-	userInfo, err := api.GetUserinfo(oidcToken)
+	userInfo, err := api.TwitchApiWithConfig.GetOidcUserInfo(oidcToken)
 	if err != nil {
 		return err
 	}
