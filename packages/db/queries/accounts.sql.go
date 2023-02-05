@@ -142,6 +142,53 @@ func (q *Queries) GetAccount(ctx context.Context, id uuid.UUID) (Account, error)
 	return i, err
 }
 
+const getAccountAndUserBySub = `-- name: GetAccountAndUserBySub :one
+SELECT accounts.id, user_id, picture, email, prefered_username, access_token, refresh_token, iss, sub, accounts.created_at, accounts.updated_at, expired_at, scope, users.id, users.created_at, users.updated_at FROM accounts INNER JOIN users ON accounts.user_id = users.id WHERE sub = $1
+`
+
+type GetAccountAndUserBySubRow struct {
+	ID               uuid.UUID
+	UserID           uuid.UUID
+	Picture          string
+	Email            string
+	PreferedUsername string
+	AccessToken      string
+	RefreshToken     string
+	Iss              string
+	Sub              string
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
+	ExpiredAt        time.Time
+	Scope            string
+	ID_2             uuid.UUID
+	CreatedAt_2      time.Time
+	UpdatedAt_2      time.Time
+}
+
+func (q *Queries) GetAccountAndUserBySub(ctx context.Context, sub string) (GetAccountAndUserBySubRow, error) {
+	row := q.db.QueryRowContext(ctx, getAccountAndUserBySub, sub)
+	var i GetAccountAndUserBySubRow
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.Picture,
+		&i.Email,
+		&i.PreferedUsername,
+		&i.AccessToken,
+		&i.RefreshToken,
+		&i.Iss,
+		&i.Sub,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.ExpiredAt,
+		&i.Scope,
+		&i.ID_2,
+		&i.CreatedAt_2,
+		&i.UpdatedAt_2,
+	)
+	return i, err
+}
+
 const getAccountBySub = `-- name: GetAccountBySub :one
 SELECT id, user_id, picture, email, prefered_username, access_token, refresh_token, iss, sub, created_at, updated_at, expired_at, scope FROM accounts WHERE sub = $1
 `

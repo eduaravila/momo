@@ -71,3 +71,6 @@ SELECT * FROM users WHERE id = (SELECT user_id FROM accounts WHERE sub = $1);
 
 -- name: GetAccountBySub :one
 SELECT * FROM accounts WHERE sub = $1;
+
+-- name: GetAccountAndUserBySub :one
+SELECT * FROM accounts INNER JOIN users ON accounts.user_id = users.id WHERE sub = $1;

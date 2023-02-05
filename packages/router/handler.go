@@ -53,7 +53,6 @@ func (h *handler) Delete(route string, handler func(w http.ResponseWriter, r *ht
 }
 
 // Handle handles HTTP methods
-
 func Handle(method string, route string, handler func(w http.ResponseWriter, r *http.Request), mux *http.ServeMux) {
 	mux.HandleFunc(route, func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != method {

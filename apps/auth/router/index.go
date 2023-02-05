@@ -13,6 +13,17 @@ func Routes(env *config.Env) *http.ServeMux {
 
 	twitchHandler := oauth.NewTwitchHandler(env)
 
-	mux.Get("/oauth/twitch/callback", twitchHandler.GetToken)
+	mux.Get("/oauth/twitch/callback", MakeHTTPHandler(twitchHandler.Callback))
 	return mux.GetServeMux()
+}
+
+type HttpHandlerFunction func(w http.ResponseWriter, r *http.Request) error
+
+func MakeHTTPHandler(fn HttpHandlerFunction) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		err := fn(w, r)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+	}
 }
