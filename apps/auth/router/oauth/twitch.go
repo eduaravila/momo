@@ -3,34 +3,36 @@ package oauth
 import (
 	"context"
 	"net/http"
+	"os"
 
 	"github.com/eduaravila/momo/apps/auth/api"
 	"github.com/eduaravila/momo/apps/auth/config"
 	"github.com/eduaravila/momo/apps/auth/factory"
 	"github.com/eduaravila/momo/apps/auth/model"
-	"github.com/eduaravila/momo/apps/auth/url"
 	"github.com/eduaravila/momo/packages/db/queries"
 	"github.com/google/uuid"
 )
 
 type TwitchHandler struct {
 	env *config.Env
+	api *api.TwitchAPI
 }
 
-func NewTwitchHandler(env *config.Env) *TwitchHandler {
-	return &TwitchHandler{env: env}
+func NewTwitchHandler(env *config.Env, api *api.TwitchAPI) *TwitchHandler {
+	return &TwitchHandler{env: env, api: api}
 }
 
 func (t *TwitchHandler) Callback(w http.ResponseWriter, r *http.Request) error {
+
 	queryparams := r.URL.Query()
 	code := queryparams.Get("code")
 
-	oidcToken, err := api.TwitchApiWithConfig.GetToken(code)
+	oidcToken, err := t.api.GetToken(code)
 
 	if err != nil {
 		return err
 	}
-	userInfo, err := api.TwitchApiWithConfig.GetOidcUserInfo(oidcToken)
+	userInfo, err := t.api.GetOidcUserInfo(oidcToken)
 	if err != nil {
 		return err
 	}
@@ -64,6 +66,6 @@ func (t *TwitchHandler) Callback(w http.ResponseWriter, r *http.Request) error {
 		Path:     "/",
 	})
 
-	http.Redirect(w, r, url.DASHBOARD_APP_URL, http.StatusFound)
+	http.Redirect(w, r, os.Getenv("DASHBOARD_APP_URL"), http.StatusFound)
 	return nil
 }

@@ -4,11 +4,11 @@ import "net/http"
 
 // interface proxy that handles HTTP methods using http.ServeMux
 type Handler interface {
-	Get(route string, handler func(w http.ResponseWriter, r *http.Request))
-	Post(route string, handler func(w http.ResponseWriter, r *http.Request))
-	Put(route string, handler func(w http.ResponseWriter, r *http.Request))
-	Patch(route string, handler func(w http.ResponseWriter, r *http.Request))
-	Delete(route string, handler func(w http.ResponseWriter, r *http.Request))
+	Get(route string, handler http.Handler)
+	Post(route string, handler http.Handler)
+	Put(route string, handler http.Handler)
+	Patch(route string, handler http.Handler)
+	Delete(route string, handler http.Handler)
 	GetServeMux() *http.ServeMux
 }
 
@@ -23,7 +23,7 @@ func NewHandler(mux *http.ServeMux) Handler {
 }
 
 // Get handles GET method
-func (h *handler) Get(route string, handler func(w http.ResponseWriter, r *http.Request)) {
+func (h *handler) Get(route string, handler http.Handler) {
 	Handle(http.MethodGet, route, handler, h.serveMux)
 }
 
@@ -33,33 +33,33 @@ func (h *handler) GetServeMux() *http.ServeMux {
 }
 
 // Post handles POST method
-func (h *handler) Post(route string, handler func(w http.ResponseWriter, r *http.Request)) {
+func (h *handler) Post(route string, handler http.Handler) {
 	Handle(http.MethodPost, route, handler, h.serveMux)
 }
 
 // Put handles PUT method
-func (h *handler) Put(route string, handler func(w http.ResponseWriter, r *http.Request)) {
+func (h *handler) Put(route string, handler http.Handler) {
 	Handle(http.MethodPut, route, handler, h.serveMux)
 }
 
 // Patch handles PATCH method
-func (h *handler) Patch(route string, handler func(w http.ResponseWriter, r *http.Request)) {
+func (h *handler) Patch(route string, handler http.Handler) {
 	Handle(http.MethodPatch, route, handler, h.serveMux)
 }
 
 // Delete handles DELETE method
-func (h *handler) Delete(route string, handler func(w http.ResponseWriter, r *http.Request)) {
+func (h *handler) Delete(route string, handler http.Handler) {
 	Handle(http.MethodDelete, route, handler, h.serveMux)
 }
 
 // Handle handles HTTP methods
-func Handle(method string, route string, handler func(w http.ResponseWriter, r *http.Request), mux *http.ServeMux) {
+func Handle(method string, route string, handler http.Handler, mux *http.ServeMux) {
 	mux.HandleFunc(route, func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != method {
 			http.Error(w, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
-			return
+
 		}
-		handler(w, r)
+		handler.ServeHTTP(w, r)
 	})
 
 }

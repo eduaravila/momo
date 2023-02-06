@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/eduaravila/momo/apps/auth/config"
 	"github.com/eduaravila/momo/apps/auth/router"
@@ -11,16 +12,25 @@ import (
 
 func CorsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		r.Header.Set("Access-Control-Allow-Origin", "http://localhost")
-		r.Header.Set("Access-Control-Allow-Credentials", "true")
-		r.Header.Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
+		var accessControlAllowHeaders strings.Builder
+		accessControlAllowHeaders.WriteString("Accept,")
+		accessControlAllowHeaders.WriteString("Content-Type,")
+		accessControlAllowHeaders.WriteString("Content-Length,")
+		accessControlAllowHeaders.WriteString("Accept-Encoding,")
+		accessControlAllowHeaders.WriteString("X-CSRF-Token,")
+		accessControlAllowHeaders.WriteString("Authorization")
+
+		r.Header = map[string][]string{
+			"Access-Control-Allow-Origin":      {"http://localhost"},
+			"Access-Control-Allow-Credentials": {"true"},
+			"Access-Control-Allow-Headers":     {accessControlAllowHeaders.String()},
+		}
 		next.ServeHTTP(w, r)
 
 	})
 }
 
 func main() {
-
 	db, err := config.InitPostgresDB()
 
 	if err != nil {

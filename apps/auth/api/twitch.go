@@ -6,48 +6,47 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/eduaravila/momo/apps/auth/config"
 	"github.com/eduaravila/momo/apps/auth/model"
-	"github.com/eduaravila/momo/apps/auth/url"
 	"github.com/eduaravila/momo/apps/auth/utils"
 )
 
-type Config interface {
+type IConfig interface {
 	SetBaseURL(baseurl string)
 	GetBaseURL() string
 }
 
-type ApiConfig struct {
+type Config struct {
 	BaseURL string
 }
 
-func (a *ApiConfig) SetBaseURL(baseurl string) {
+func (a *Config) SetBaseURL(baseurl string) {
 	a.BaseURL = baseurl
 }
 
-func (a *ApiConfig) GetBaseURL() string {
+func (a *Config) GetBaseURL() string {
 	return a.BaseURL
 }
 
-type TwitchApi struct {
-	Config
+type TwitchAPI struct {
+	IConfig
 }
 
 // Paths for the Twitch API
 const (
-	token_path    = "/oauth2/token"    // POST
-	userinfo_path = "/oauth2/userinfo" // GET
+	tokenPath    = "/oauth2/token"    // POST
+	userInfoPath = "/oauth2/userinfo" // GET
 )
 
-func (t *TwitchApi) GetToken(code string) (*model.TokenResponse, error) {
-
+func (t *TwitchAPI) GetToken(code string) (*model.TokenResponse, error) {
 	body := model.TokenBody{
 		ClientID:     config.TWITCH_APPLICATION_CLIEND_ID,
 		ClientSecret: config.TWITCH_APPLICATION_CLIENT_SECRET,
 		Code:         code,
 		GrantType:    "authorization_code",
-		RedirectURI:  url.DASHBOARD_APP_URL,
+		RedirectURI:  os.Getenv("DASHBOARD_APP_URL"),
 	}
 
 	// struct to io.Reader
@@ -57,7 +56,7 @@ func (t *TwitchApi) GetToken(code string) (*model.TokenResponse, error) {
 	}
 
 	res, err := utils.Post(utils.RequestParams{
-		Url:  fmt.Sprintf("%s%s", t.Config.GetBaseURL(), token_path),
+		Url:  fmt.Sprintf("%s%s", t.IConfig.GetBaseURL(), tokenPath),
 		Body: bytes.NewReader(jsonBody),
 	})
 
@@ -76,32 +75,30 @@ func (t *TwitchApi) GetToken(code string) (*model.TokenResponse, error) {
 	return &tokenRespose, nil
 }
 
-func (t *TwitchApi) GetOidcUserInfo(oidcToken *model.TokenResponse) (*model.UserinfoRespose, error) {
-
+func (t *TwitchAPI) GetOidcUserInfo(oidcToken *model.TokenResponse) (*model.UserinfoRespose, error) {
 	// get user info
 	userInfo, err := utils.Get(utils.RequestParams{
-		Url: fmt.Sprintf("%s%s", url.TWITCH_API_URL, userinfo_path),
+		Url: fmt.Sprintf("%s%s", os.Getenv("TWITCH_API_URL"), userInfoPath),
 		Headers: [][]string{
 			{"Authorization", "Bearer " + oidcToken.AccessToken},
 		},
 		Body: nil,
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	var userInfoRespose model.UserinfoRespose
-	if err != nil {
+
+	if err = json.NewDecoder(userInfo.Body).Decode(&userInfoRespose); err != nil {
 		return nil, err
 	}
-	err = json.NewDecoder(userInfo.Body).Decode(&userInfoRespose)
-	if err != nil {
-		return nil, err
-	}
+
 	return &userInfoRespose, nil
 }
 
-func NewTwitchApi(config Config) *TwitchApi {
-	return &TwitchApi{
-		Config: config,
+func NewTwitchAPI(config IConfig) *TwitchAPI {
+	return &TwitchAPI{
+		IConfig: config,
 	}
 }
-
-var TwitchApiWithConfig = NewTwitchApi(&ApiConfig{BaseURL: url.TWITCH_API_URL})
