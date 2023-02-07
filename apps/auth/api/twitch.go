@@ -97,8 +97,17 @@ func (t *TwitchAPI) GetOidcUserInfo(oidcToken *model.TokenResponse) (*model.User
 	return &userInfoRespose, nil
 }
 
-func NewTwitchAPI(config IConfig) *TwitchAPI {
+func NewTwitchAPI() *TwitchAPI {
 	return &TwitchAPI{
-		IConfig: config,
+		IConfig: &Config{BaseURL: os.Getenv("TWITCH_OAUTH2_URL")},
 	}
+}
+
+func NewTwitchAPIWithOpts(config IConfig) *TwitchAPI {
+	if config != nil {
+		return &TwitchAPI{
+			IConfig: config,
+		}
+	}
+	return NewTwitchAPI()
 }
