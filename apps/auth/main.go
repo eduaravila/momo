@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/eduaravila/momo/apps/auth/config"
-	"github.com/eduaravila/momo/apps/auth/router"
+	v1 "github.com/eduaravila/momo/apps/auth/handler/v1"
 	"github.com/eduaravila/momo/packages/db/queries"
 )
 
@@ -42,6 +42,6 @@ func main() {
 
 	mux := http.NewServeMux()
 
-	mux.Handle("/", CorsMiddleware(router.Routes(env)))
+	mux.Handle("/", CorsMiddleware(v1.Routes(env)))
 	http.ListenAndServe(":8080", mux)
 }

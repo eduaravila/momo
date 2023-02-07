@@ -1,20 +1,20 @@
-package router
+package v1
 
 import (
 	"net/http"
 
-	"github.com/eduaravila/momo/apps/auth/api"
 	"github.com/eduaravila/momo/apps/auth/config"
-	"github.com/eduaravila/momo/apps/auth/router/oauth"
+	"github.com/eduaravila/momo/apps/auth/svc"
 	"github.com/eduaravila/momo/packages/router"
 )
 
 func Routes(env *config.Env) *http.ServeMux {
 	mux := router.NewHandler(http.NewServeMux())
 
-	twitchHandler := oauth.NewTwitchHandler(env, api.NewTwitchAPI())
+	twitchHandler := NewTwitchHandler(env, svc.NewTwitchAPI())
 
 	mux.Get("/oauth/twitch/callback", MakeHTTPHandler(twitchHandler.Callback))
+
 	return mux.GetServeMux()
 }
 

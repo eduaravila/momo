@@ -1,4 +1,4 @@
-package api
+package svc
 
 import (
 	"bytes"
@@ -8,8 +8,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/eduaravila/momo/apps/auth/config"
-	"github.com/eduaravila/momo/apps/auth/model"
+	"github.com/eduaravila/momo/apps/auth/types"
 	"github.com/eduaravila/momo/apps/auth/utils"
 )
 
@@ -40,10 +39,10 @@ const (
 	userInfoPath = "/oauth2/userinfo" // GET
 )
 
-func (t *TwitchAPI) GetToken(code string) (*model.TokenResponse, error) {
-	body := model.TokenBody{
-		ClientID:     config.TWITCH_APPLICATION_CLIEND_ID,
-		ClientSecret: config.TWITCH_APPLICATION_CLIENT_SECRET,
+func (t *TwitchAPI) GetToken(code string) (*types.TokenResponse, error) {
+	body := types.TokenBody{
+		ClientID:     os.Getenv("TWITCH_APPLICATION_CLIEND_ID"),
+		ClientSecret: os.Getenv("TWITCH_APPLICATION_CLIENT_SECRET"),
 		Code:         code,
 		GrantType:    "authorization_code",
 		RedirectURI:  os.Getenv("DASHBOARD_APP_URL"),
@@ -67,7 +66,7 @@ func (t *TwitchAPI) GetToken(code string) (*model.TokenResponse, error) {
 		return nil, errors.New("gettoken: error getting token")
 	}
 
-	var tokenRespose model.TokenResponse
+	var tokenRespose types.TokenResponse
 	err = json.NewDecoder(res.Body).Decode(&tokenRespose)
 	if err != nil {
 		return nil, err
@@ -75,7 +74,7 @@ func (t *TwitchAPI) GetToken(code string) (*model.TokenResponse, error) {
 	return &tokenRespose, nil
 }
 
-func (t *TwitchAPI) GetOidcUserInfo(oidcToken *model.TokenResponse) (*model.UserinfoRespose, error) {
+func (t *TwitchAPI) GetOidcUserInfo(oidcToken *types.TokenResponse) (*types.UserinfoRespose, error) {
 	// get user info
 	userInfo, err := utils.Get(utils.RequestParams{
 		Url: fmt.Sprintf("%s%s", os.Getenv("TWITCH_API_URL"), userInfoPath),
@@ -88,7 +87,7 @@ func (t *TwitchAPI) GetOidcUserInfo(oidcToken *model.TokenResponse) (*model.User
 		return nil, err
 	}
 
-	var userInfoRespose model.UserinfoRespose
+	var userInfoRespose types.UserinfoRespose
 
 	if err = json.NewDecoder(userInfo.Body).Decode(&userInfoRespose); err != nil {
 		return nil, err

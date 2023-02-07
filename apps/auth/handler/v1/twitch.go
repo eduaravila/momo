@@ -1,24 +1,24 @@
-package oauth
+package v1
 
 import (
 	"context"
 	"net/http"
 	"os"
 
-	"github.com/eduaravila/momo/apps/auth/api"
 	"github.com/eduaravila/momo/apps/auth/config"
 	"github.com/eduaravila/momo/apps/auth/factory"
-	"github.com/eduaravila/momo/apps/auth/model"
+	"github.com/eduaravila/momo/apps/auth/storage"
+	"github.com/eduaravila/momo/apps/auth/svc"
 	"github.com/eduaravila/momo/packages/db/queries"
 	"github.com/google/uuid"
 )
 
 type TwitchHandler struct {
 	env *config.Env
-	api *api.TwitchAPI
+	api *svc.TwitchAPI
 }
 
-func NewTwitchHandler(env *config.Env, api *api.TwitchAPI) *TwitchHandler {
+func NewTwitchHandler(env *config.Env, api *svc.TwitchAPI) *TwitchHandler {
 	return &TwitchHandler{env: env, api: api}
 }
 
@@ -37,13 +37,13 @@ func (t *TwitchHandler) Callback(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	ua, err := model.NewOIDCBuilder(t.env.Queries, r.Context()).CreateUserAccount(*userInfo, *oidcToken)
+	userAndAccount, err := storage.NewOIDCBuilder(r.Context(), t.env.Queries).CreateUserAccount(*userInfo, *oidcToken)
 
 	if err != nil {
 		return err
 	}
 
-	token := factory.NewSessionToken(ua.User.ID.String())
+	token := factory.NewSessionToken(userAndAccount.User.ID.String())
 	tokenString, err := token.Sign()
 	if err != nil {
 		return err
@@ -53,7 +53,7 @@ func (t *TwitchHandler) Callback(w http.ResponseWriter, r *http.Request) error {
 		ID:           uuid.New(),
 		ExpiredAt:    token.Claims().ExpiresAt.Time,
 		UserAgent:    r.UserAgent(),
-		UserID:       ua.User.ID,
+		UserID:       userAndAccount.User.ID,
 		SessionToken: tokenString,
 		IpAddress:    r.RemoteAddr,
 	})
