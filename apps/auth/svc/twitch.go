@@ -9,7 +9,7 @@ import (
 	"os"
 
 	"github.com/eduaravila/momo/apps/auth/types"
-	"github.com/eduaravila/momo/apps/auth/utils"
+	"github.com/eduaravila/momo/packages/router"
 )
 
 type IConfig interface {
@@ -40,7 +40,7 @@ const (
 )
 
 func (t *TwitchAPI) GetToken(code string) (*types.TokenResponse, error) {
-	body := types.TokenBody{
+	body := types.TokenBodyRequest{
 		ClientID:     os.Getenv("TWITCH_APPLICATION_CLIEND_ID"),
 		ClientSecret: os.Getenv("TWITCH_APPLICATION_CLIENT_SECRET"),
 		Code:         code,
@@ -54,7 +54,7 @@ func (t *TwitchAPI) GetToken(code string) (*types.TokenResponse, error) {
 		return nil, err
 	}
 
-	res, err := utils.Post(utils.RequestParams{
+	res, err := router.Post(router.RequestParams{
 		Url:  fmt.Sprintf("%s%s", t.IConfig.GetBaseURL(), tokenPath),
 		Body: bytes.NewReader(jsonBody),
 	})
@@ -76,7 +76,7 @@ func (t *TwitchAPI) GetToken(code string) (*types.TokenResponse, error) {
 
 func (t *TwitchAPI) GetOidcUserInfo(oidcToken *types.TokenResponse) (*types.UserinfoRespose, error) {
 	// get user info
-	userInfo, err := utils.Get(utils.RequestParams{
+	userInfo, err := router.Get(router.RequestParams{
 		Url: fmt.Sprintf("%s%s", os.Getenv("TWITCH_API_URL"), userInfoPath),
 		Headers: [][]string{
 			{"Authorization", "Bearer " + oidcToken.AccessToken},
