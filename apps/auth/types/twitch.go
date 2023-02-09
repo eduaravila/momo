@@ -32,3 +32,8 @@ type UserinfoRespose struct {
 	PreferedUsername string    `json:"preferred_username"`
 	UpdatedAt        time.Time `json:"updated_at"`
 }
+
+type Metadata struct {
+	UserAgent string
+	IPAddress string
+}

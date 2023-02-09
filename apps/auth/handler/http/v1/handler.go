@@ -1,14 +1,15 @@
 package v1
 
 import (
-	"context"
 	"net/http"
 	"os"
 	"strings"
 
-	"github.com/eduaravila/momo/apps/auth/config"
+	"github.com/eduaravila/momo/apps/auth/service"
 	"github.com/eduaravila/momo/apps/auth/storage"
 	"github.com/eduaravila/momo/apps/auth/svc"
+	"github.com/eduaravila/momo/apps/auth/types"
+	"github.com/eduaravila/momo/packages/db/queries"
 	"github.com/eduaravila/momo/packages/router"
 )
 
@@ -43,13 +44,15 @@ func withError(fn HTTPWithError) http.Handler {
 	})
 }
 
-func TwitchCallback(s *TwitchHandler) HTTPWithError {
+func TwitchCallback(q *queries.Queries, twitchAPI *svc.TwitchAPI) HTTPWithError {
 
 	return func(w http.ResponseWriter, r *http.Request) error {
+		s := service.NewTwitchHandler(storage.NewStorage(r.Context(), q), twitchAPI)
+
 		queryparams := r.URL.Query()
 		code := queryparams.Get("code")
 
-		token, err := s.LogIn(code, Metadata{r.UserAgent(), r.RemoteAddr})
+		token, err := s.LogIn(code, types.Metadata{UserAgent: r.UserAgent(), IPAddress: r.RemoteAddr})
 		if err != nil {
 			return err
 		}
@@ -66,11 +69,10 @@ func TwitchCallback(s *TwitchHandler) HTTPWithError {
 	}
 }
 
-func Handler(env *config.Env) http.Handler {
+func Handler(q *queries.Queries, twitchAPI *svc.TwitchAPI) http.Handler {
 	router := router.NewHandler(http.NewServeMux())
 
-	twitchHandler := NewTwitchHandler(storage.NewUserAccountSessionStorage(context.Background(), env.Queries), svc.NewTwitchAPI())
-	router.Get("/oauth/twitch/callback", withError(TwitchCallback(twitchHandler)))
+	router.Get("/oauth/twitch/callback", withError(TwitchCallback(q, twitchAPI)))
 
 	return withCors(router.GetServeMux())
 }

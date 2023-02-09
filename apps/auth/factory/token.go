@@ -43,3 +43,18 @@ func (t *SessionToken) Sign() (string, error) {
 	}
 	return t.Token.SignedString(decodedKey)
 }
+
+func (t *SessionToken) Verify(tokenString string) error {
+	decodedKey, err := jwt.ParseECPublicKeyFromPEM([]byte(os.Getenv("JWT_PUBLIC_KEY")))
+	if err != nil {
+		return err
+	}
+	_, err = jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		return decodedKey, nil
+	})
+	return err
+}
+
+func (t *SessionToken) String() string {
+	return t.Token.Raw
+}

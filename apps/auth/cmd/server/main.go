@@ -4,9 +4,9 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/eduaravila/momo/apps/auth/config"
 	v1 "github.com/eduaravila/momo/apps/auth/handler/http/v1"
 	"github.com/eduaravila/momo/apps/auth/storage"
+	"github.com/eduaravila/momo/apps/auth/svc"
 	"github.com/eduaravila/momo/packages/db/queries"
 )
 
@@ -16,11 +16,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	env := &config.Env{
-		Db: db, Queries: queries.New(db),
-	}
-
-	router := v1.Handler(env)
+	router := v1.Handler(queries.New(db), svc.NewTwitchAPI())
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
