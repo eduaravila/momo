@@ -22,8 +22,9 @@ FROM base as prod
 ENV ENV=production
 
 # create dir for the binary
-RUN mkdir -p /app/cmd
-RUN  go build -o cmd
+WORKDIR /github.com/eduaravila/momo/apps/auth/cmd/server
+
+RUN  go build -o .
 
 # execute the binary
-CMD [ "./cmd/auth" ]
+CMD [ "./server" ]
