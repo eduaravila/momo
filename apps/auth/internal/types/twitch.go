@@ -11,7 +11,7 @@ type (
 		RedirectURI  string `json:"redirect_uri"`
 	}
 
-	TokenResponse struct {
+	OAuthToken struct {
 		AccessToken  string   `json:"access_token"`
 		RefreshToken string   `json:"refresh_token"`
 		ExpiresIn    int      `json:"expires_in"`
@@ -20,7 +20,7 @@ type (
 	}
 )
 
-type UserinfoRespose struct {
+type OIDCClaims struct {
 	Aud              string    `json:"aud"`
 	Exp              int64     `json:"exp"`
 	Iat              int64     `json:"iat"`

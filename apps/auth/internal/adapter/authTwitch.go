@@ -1,4 +1,4 @@
-package svc
+package adapter
 
 import (
 	"bytes"
@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/eduaravila/momo/apps/auth/types"
+	"github.com/eduaravila/momo/apps/auth/internal/types"
 	"github.com/eduaravila/momo/packages/router"
 )
 
@@ -39,7 +39,7 @@ const (
 	userInfoPath = "/oauth2/userinfo" // GET
 )
 
-func (t *TwitchAPI) GetToken(code string) (*types.TokenResponse, error) {
+func (t *TwitchAPI) GetToken(code string) (*types.OAuthToken, error) {
 	body := types.TokenBodyRequest{
 		ClientID:     os.Getenv("TWITCH_APPLICATION_CLIEND_ID"),
 		ClientSecret: os.Getenv("TWITCH_APPLICATION_CLIENT_SECRET"),
@@ -66,7 +66,7 @@ func (t *TwitchAPI) GetToken(code string) (*types.TokenResponse, error) {
 		return nil, errors.New("gettoken: error getting token")
 	}
 
-	var tokenRespose types.TokenResponse
+	var tokenRespose types.OAuthToken
 	err = json.NewDecoder(res.Body).Decode(&tokenRespose)
 	if err != nil {
 		return nil, err
@@ -74,7 +74,7 @@ func (t *TwitchAPI) GetToken(code string) (*types.TokenResponse, error) {
 	return &tokenRespose, nil
 }
 
-func (t *TwitchAPI) GetOidcUserInfo(oidcToken *types.TokenResponse) (*types.UserinfoRespose, error) {
+func (t *TwitchAPI) GetOidcUserInfo(oidcToken *types.OAuthToken) (*types.OIDCClaims, error) {
 	// get user info
 	userInfo, err := router.Get(router.RequestParams{
 		Url: fmt.Sprintf("%s%s", os.Getenv("TWITCH_API_URL"), userInfoPath),
@@ -87,7 +87,7 @@ func (t *TwitchAPI) GetOidcUserInfo(oidcToken *types.TokenResponse) (*types.User
 		return nil, err
 	}
 
-	var userInfoRespose types.UserinfoRespose
+	var userInfoRespose types.OIDCClaims
 
 	if err = json.NewDecoder(userInfo.Body).Decode(&userInfoRespose); err != nil {
 		return nil, err

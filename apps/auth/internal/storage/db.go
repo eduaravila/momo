@@ -12,7 +12,7 @@ import (
 )
 
 type Storage struct {
-	*queries.Queries
+	queries *queries.Queries
 	context context.Context
 }
 
@@ -31,7 +31,7 @@ func InitPostgresDB() (*sql.DB, error) {
 }
 
 func (s Storage) CreateSession(session queries.Session) (queries.Session, error) {
-	return s.Queries.CreateSession(s.context, queries.CreateSessionParams{
+	return s.queries.CreateSession(s.context, queries.CreateSessionParams{
 		ID:           uuid.New(),
 		ExpiredAt:    session.ExpiredAt,
 		UserAgent:    session.UserAgent,
@@ -42,13 +42,13 @@ func (s Storage) CreateSession(session queries.Session) (queries.Session, error)
 }
 
 func (s Storage) CreateUser() (queries.User, error) {
-	return s.Queries.CreateUser(s.context,
+	return s.queries.CreateUser(s.context,
 		uuid.New(),
 	)
 }
 
 func (s Storage) CreateAccount(account queries.Account) (queries.Account, error) {
-	return s.Queries.CreateAccount(s.context,
+	return s.queries.CreateAccount(s.context,
 		queries.CreateAccountParams{
 			ID:               uuid.New(),
 			Sub:              account.Sub,
@@ -66,5 +66,5 @@ func (s Storage) CreateAccount(account queries.Account) (queries.Account, error)
 }
 
 func (s Storage) GetAccountAndUserBySub(sub string) (queries.GetAccountAndUserBySubRow, error) {
-	return s.Queries.GetAccountAndUserBySub(s.context, sub)
+	return s.queries.GetAccountAndUserBySub(s.context, sub)
 }
