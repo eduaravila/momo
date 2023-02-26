@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"strings"
 	"time"
 
@@ -17,21 +18,27 @@ type UserAccount struct {
 }
 
 type AccountUserStorage struct {
-	queries *queries.Queries
 	context context.Context
+	queries *queries.Queries
 }
 
 func NewAccountUserStorage(context context.Context, queries *queries.Queries) *AccountUserStorage {
-	return &AccountUserStorage{queries, context}
+	return &AccountUserStorage{context, queries}
 }
 
 func (a *Storage) CreateUserAccount(claims types.OIDCClaims, token types.OAuthToken) (*UserAccount, error) {
 	result, err := a.queries.GetAccountAndUserBySub(a.context, claims.Sub)
-	uid := result.UserID
+
+	user := queries.User{
+		ID:        result.UserID,
+		CreatedAt: result.CreatedAt_2,
+		UpdatedAt: result.UpdatedAt_2,
+	}
+
 	if err != nil && err != sql.ErrNoRows {
 		return nil, err
 	}
-	var user queries.User
+
 	if err == sql.ErrNoRows {
 		user, err = a.queries.CreateUser(a.context, uuid.New())
 		if err != nil {
@@ -39,19 +46,24 @@ func (a *Storage) CreateUserAccount(claims types.OIDCClaims, token types.OAuthTo
 		}
 	}
 
+	fmt.Println(strings.Join(token.Scope, " "), time.Now().Add(time.Duration(int64(token.ExpiresIn))*time.Second))
+
 	account, err := a.queries.CreateAccount(a.context, queries.CreateAccountParams{
+		ID:               uuid.New(),
+		UserID:           user.ID,
+		Picture:          claims.Picture,
+		Email:            claims.Email,
+		PreferedUsername: claims.PreferedUsername,
 		AccessToken:      token.AccessToken,
 		RefreshToken:     token.RefreshToken,
-		ExpiredAt:        time.Unix(int64(token.ExpiresIn), 0),
-		Email:            claims.Email,
-		Picture:          claims.Picture,
 		Iss:              claims.Iss,
-		PreferedUsername: claims.PreferedUsername,
-		ID:               uuid.New(),
-		Scope:            strings.Join(token.Scope, " "),
 		Sub:              claims.Sub,
-		UserID:           uid,
+		CreatedAt:        time.Time{},
+		UpdatedAt:        time.Time{},
+		ExpiredAt:        time.Now().Add(time.Duration(int64(token.ExpiresIn)) * time.Second),
+		Scope:            strings.Join(token.Scope, " "),
 	})
+
 	if err != nil {
 		return nil, err
 	}

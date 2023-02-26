@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"log"
 	"net/http"
 	"os"
 	"strings"
@@ -38,8 +39,8 @@ func withCors(next http.Handler) http.Handler {
 func withError(fn HTTPWithError) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if err := fn(w, r); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			r.Context()
+			log.New(os.Stderr, "ERROR: ", log.LstdFlags).Println(err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 		}
 	})
 }
@@ -51,7 +52,8 @@ func TwitchLogIn(q *queries.Queries, twitchAPI *adapter.TwitchAPI) HTTPWithError
 		queryparams := r.URL.Query()
 		code := queryparams.Get("code")
 
-		token, err := s.LogIn(code, types.Metadata{UserAgent: r.UserAgent(), IPAddress: r.RemoteAddr})
+		session, err := s.LogIn(code, types.Metadata{UserAgent: r.UserAgent(), IPAddress: r.RemoteAddr})
+
 		if err != nil {
 			return err
 		}
@@ -59,7 +61,7 @@ func TwitchLogIn(q *queries.Queries, twitchAPI *adapter.TwitchAPI) HTTPWithError
 			HttpOnly: true,
 			SameSite: http.SameSiteLaxMode,
 			Name:     "session",
-			Value:    token,
+			Value:    session.SessionToken,
 			Path:     "/",
 		})
 
@@ -71,5 +73,6 @@ func TwitchLogIn(q *queries.Queries, twitchAPI *adapter.TwitchAPI) HTTPWithError
 func Handler(q *queries.Queries, twitchAPI *adapter.TwitchAPI) http.Handler {
 	router := router.NewHandler(http.NewServeMux())
 	router.Get("/oauth/twitch/callback", withError(TwitchLogIn(q, twitchAPI)))
+
 	return withCors(router.GetServeMux())
 }

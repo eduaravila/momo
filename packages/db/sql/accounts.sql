@@ -1,4 +1,3 @@
-
 CREATE TABLE accounts (
     id uuid primary key not null,
     user_id uuid not null,
@@ -8,15 +7,13 @@ CREATE TABLE accounts (
     access_token varchar(255) not null,
     refresh_token varchar(255) not null,
     iss varchar(255) not null,
-    sub varchar(255) not null,
+    sub varchar(255) not null unique,
     created_at timestamp not null default now(),
     updated_at timestamp not null default now(),
     expired_at timestamp not null,
     scope varchar(255) not null,
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (iss) REFERENCES issuers(name)
+    FOREIGN KEY (user_id) REFERENCES users(id)
 );
-
 
 
 CREATE TABLE users (
@@ -27,7 +24,21 @@ CREATE TABLE users (
 
 
 -- name: CreateAccount :one
-INSERT INTO accounts (id, user_id, picture, email, prefered_username, access_token, refresh_token, iss, sub, expired_at, scope) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) ON CONFLICT (sub) DO UPDATE SET user_id = $2, picture = $3, email = $4, prefered_username = $5, access_token = $6, refresh_token = $7, iss = $8, sub = $9, expired_at = $10, scope = $11 
+INSERT INTO 
+accounts (id, user_id, picture, email, prefered_username, access_token, refresh_token, iss, sub, created_at, updated_at, expired_at, scope) 
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) 
+ON CONFLICT (sub) DO UPDATE 
+SET user_id = EXCLUDED.user_id, 
+picture = EXCLUDED.picture, 
+email = EXCLUDED.email, 
+prefered_username = EXCLUDED.prefered_username, 
+access_token = EXCLUDED.access_token, 
+refresh_token = EXCLUDED.refresh_token, 
+iss = EXCLUDED.iss, 
+sub = EXCLUDED.sub, 
+expired_at = EXCLUDED.expired_at,
+scope = EXCLUDED.scope,
+updated_at = now()
 RETURNING *;
 
 -- name: GetAccount :one

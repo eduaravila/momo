@@ -66,6 +66,7 @@ CREATE TABLE role_permissions (
     PRIMARY KEY (role_id, permission_id)
 );
 
+-- save mods and other roles here an user can be in multiple roles, have multiple permissions, and have multiple accounts
 CREATE TABLE user_accounts_join (
     PRIMARY KEY (user_id, account_id),
     user_id uuid not null,

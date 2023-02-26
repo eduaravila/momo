@@ -1,6 +1,8 @@
 package router
 
-import "net/http"
+import (
+	"net/http"
+)
 
 // interface proxy that handles HTTP methods using http.ServeMux
 type Handler interface {

@@ -10,10 +10,10 @@ import (
 
 type LoginOIDCService struct {
 	storage Storage
-	api     AuthApi
+	api     AuthAPI
 }
 
-type AuthApi interface {
+type AuthAPI interface {
 	GetToken(code string) (*types.OAuthToken, error)
 	GetOidcUserInfo(*types.OAuthToken) (*types.OIDCClaims, error)
 }
@@ -27,31 +27,32 @@ func NewTwitchHandler(storage Storage, api *adapter.TwitchAPI) *LoginOIDCService
 	return &LoginOIDCService{storage: storage, api: api}
 }
 
-func (t *LoginOIDCService) LogIn(code string, metadata types.Metadata) (string, error) {
-
+func (t *LoginOIDCService) LogIn(code string, metadata types.Metadata) (*queries.Session, error) {
 	tokenResponse, err := t.api.GetToken(code)
-
 	if err != nil {
-		return "", err
+
+		return nil, err
 	}
+
 	userInfoResponse, err := t.api.GetOidcUserInfo(tokenResponse)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	userAccount, err := t.storage.CreateUserAccount(*userInfoResponse, *tokenResponse)
-
 	if err != nil {
-		return "", err
+
+		return nil, err
 	}
 
 	token := factory.NewSessionToken(userAccount.User.ID.String())
 	tokenString, err := token.Sign()
+
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	t.storage.CreateSession(queries.Session{
+	session, err := t.storage.CreateSession(queries.Session{
 		ExpiredAt:    token.Claims().ExpiresAt.Time,
 		UserAgent:    metadata.UserAgent,
 		UserID:       userAccount.User.ID,
@@ -59,5 +60,5 @@ func (t *LoginOIDCService) LogIn(code string, metadata types.Metadata) (string, 
 		IpAddress:    metadata.IPAddress,
 	})
 
-	return tokenString, nil
+	return &session, err
 }

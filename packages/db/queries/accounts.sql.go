@@ -57,8 +57,23 @@ func (q *Queries) CountAccounts(ctx context.Context) (int64, error) {
 }
 
 const createAccount = `-- name: CreateAccount :one
-INSERT INTO accounts (id, user_id, picture, email, prefered_username, access_token, refresh_token, iss, sub, expired_at, scope) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) ON CONFLICT (sub) DO UPDATE SET user_id = $2, picture = $3, email = $4, prefered_username = $5, access_token = $6, refresh_token = $7, iss = $8, sub = $9, expired_at = $10, scope = $11 
-RETURNING id, user_id, picture, email, prefered_username, access_token, refresh_token, iss, sub, created_at, updated_at, expired_at, scope
+INSERT INTO 
+accounts (id, user_id, picture, email, prefered_username, access_token, refresh_token, iss, sub, created_at, updated_at, expired_at, scope) 
+VALUES 
+($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) 
+ON CONFLICT (sub) DO UPDATE 
+SET user_id = EXCLUDED.user_id, 
+picture = EXCLUDED.picture, 
+email = EXCLUDED.email, 
+prefered_username = EXCLUDED.prefered_username, 
+access_token = EXCLUDED.access_token, 
+refresh_token = EXCLUDED.refresh_token, 
+iss = EXCLUDED.iss, 
+sub = EXCLUDED.sub, 
+expired_at = EXCLUDED.expired_at,
+scope = EXCLUDED.scope,
+updated_at = now()
+ RETURNING id, user_id, picture, email, prefered_username, access_token, refresh_token, iss, sub, created_at, updated_at, expired_at, scope
 `
 
 type CreateAccountParams struct {
@@ -71,6 +86,8 @@ type CreateAccountParams struct {
 	RefreshToken     string
 	Iss              string
 	Sub              string
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
 	ExpiredAt        time.Time
 	Scope            string
 }
@@ -86,6 +103,8 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (A
 		arg.RefreshToken,
 		arg.Iss,
 		arg.Sub,
+		arg.CreatedAt,
+		arg.UpdatedAt,
 		arg.ExpiredAt,
 		arg.Scope,
 	)

@@ -1,13 +1,14 @@
 # docker-compose file to run golang server
 version: '3'
 services:
-  auth:
+  auth_debug:
     build:
       dockerfile: ./apps/auth/Dockerfile
       context: .
-      target: dev
-    container_name: auth_app
+      target: debug
+    container_name: auth_app_debug
     hostname: auth_api
+    working_dir: /github.com/eduaravila/momo/apps/auth
     environment:
       - ENV=development
       - DB_HOST=postgres 
@@ -17,7 +18,29 @@ services:
       - ./apps/auth:/github.com/eduaravila/momo/apps/auth
     ports:
       - "8080:8080"
+      - "4000:4000" 
+    restart: always
+    depends_on:
+      - postgres
+  auth:
+    build:
+      dockerfile: ./apps/auth/Dockerfile
+      context: .
+      target: dev
+    container_name: auth_app
+    hostname: auth_api
+    working_dir: /github.com/eduaravila/momo/apps/auth
     command: sh -c "air -c .air.toml"
+    environment:
+      - ENV=development
+      - DB_HOST=postgres 
+    env_file:
+      - ./apps/auth/.env.development.local
+    volumes:
+      - ./apps/auth:/github.com/eduaravila/momo/apps/auth
+    ports:
+      - "8080:8080"
+      - "4000:4000" 
     restart: always
     depends_on:
       - postgres
@@ -25,6 +48,7 @@ services:
     image: postgres:15.1-alpine
     ports:
       - "5433:5432"
+      
     environment:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_USER=postgres
@@ -35,13 +59,18 @@ services:
   migrations:
     environment:
       DATABASE_URL: postgres
-    command: sh -c "goose -dir ./migrations postgres "postgresql://postgres:postgres@postgres:5432/postgres" up"
+    command: sh -c "goose -dir ./migrations postgres "postgresql://postgres:postgres@postgres:5433/postgres" up"
     build:
       context: ./packages/db
     links:
       - postgres
     depends_on:
       - postgres
+  redis:
+    image: redis:6.2.1-alpine
+    ports:
+      - "6379:6379"
+    restart: always
     
 volumes:
   postgresdata:

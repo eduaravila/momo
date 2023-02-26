@@ -62,15 +62,18 @@ func (t *TwitchAPI) GetToken(code string) (*types.OAuthToken, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	if res.StatusCode != http.StatusOK {
 		return nil, errors.New("gettoken: error getting token")
 	}
 
 	var tokenRespose types.OAuthToken
 	err = json.NewDecoder(res.Body).Decode(&tokenRespose)
+
 	if err != nil {
 		return nil, err
 	}
+
 	return &tokenRespose, nil
 }
 
@@ -98,7 +101,7 @@ func (t *TwitchAPI) GetOidcUserInfo(oidcToken *types.OAuthToken) (*types.OIDCCla
 
 func NewTwitchAPI() *TwitchAPI {
 	return &TwitchAPI{
-		IConfig: &Config{BaseURL: os.Getenv("TWITCH_OAUTH2_URL")},
+		IConfig: &Config{BaseURL: os.Getenv("TWITCH_API_URL")},
 	}
 }
 
@@ -108,5 +111,6 @@ func NewTwitchAPIWithOpts(config IConfig) *TwitchAPI {
 			IConfig: config,
 		}
 	}
+
 	return NewTwitchAPI()
 }
