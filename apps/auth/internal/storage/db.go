@@ -13,25 +13,33 @@ import (
 
 type Storage struct {
 	queries *queries.Queries
-	context context.Context
+	ctx     context.Context
 }
 
-func NewStorage(context context.Context, queries *queries.Queries) *Storage {
-	return &Storage{queries, context}
+func NewStorage(ctx context.Context, queries *queries.Queries) *Storage {
+	return &Storage{queries, ctx}
 }
 
 func InitPostgresDB() (*sql.DB, error) {
-	db, err := sql.Open("postgres", fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_NAME")))
+	host := os.Getenv("DB_HOST")
+	port := os.Getenv("DB_PORT")
+	user := os.Getenv("DB_USER")
+	password := os.Getenv("DB_PASSWORD")
+	dbname := os.Getenv("DB_NAME")
+
+	db, err := sql.Open(
+		"postgres",
+		fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname))
 
 	if err != nil {
 		return nil, err
 	}
-	return db, db.Ping()
 
+	return db, db.Ping()
 }
 
 func (s Storage) CreateSession(session queries.Session) (queries.Session, error) {
-	return s.queries.CreateSession(s.context, queries.CreateSessionParams{
+	return s.queries.CreateSession(s.ctx, queries.CreateSessionParams{
 		ID:           uuid.New(),
 		ExpiredAt:    session.ExpiredAt,
 		UserAgent:    session.UserAgent,
@@ -42,13 +50,13 @@ func (s Storage) CreateSession(session queries.Session) (queries.Session, error)
 }
 
 func (s Storage) CreateUser() (queries.User, error) {
-	return s.queries.CreateUser(s.context,
+	return s.queries.CreateUser(s.ctx,
 		uuid.New(),
 	)
 }
 
 func (s Storage) CreateAccount(account queries.Account) (queries.Account, error) {
-	return s.queries.CreateAccount(s.context,
+	return s.queries.CreateAccount(s.ctx,
 		queries.CreateAccountParams{
 			ID:               uuid.New(),
 			Sub:              account.Sub,
@@ -66,5 +74,5 @@ func (s Storage) CreateAccount(account queries.Account) (queries.Account, error)
 }
 
 func (s Storage) GetAccountAndUserBySub(sub string) (queries.GetAccountAndUserBySubRow, error) {
-	return s.queries.GetAccountAndUserBySub(s.context, sub)
+	return s.queries.GetAccountAndUserBySub(s.ctx, sub)
 }

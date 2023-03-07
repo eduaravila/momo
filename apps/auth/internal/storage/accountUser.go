@@ -1,9 +1,7 @@
 package storage
 
 import (
-	"context"
 	"database/sql"
-	"fmt"
 	"strings"
 	"time"
 
@@ -17,17 +15,8 @@ type UserAccount struct {
 	Account queries.Account
 }
 
-type AccountUserStorage struct {
-	context context.Context
-	queries *queries.Queries
-}
-
-func NewAccountUserStorage(context context.Context, queries *queries.Queries) *AccountUserStorage {
-	return &AccountUserStorage{context, queries}
-}
-
 func (a *Storage) CreateUserAccount(claims types.OIDCClaims, token types.OAuthToken) (*UserAccount, error) {
-	result, err := a.queries.GetAccountAndUserBySub(a.context, claims.Sub)
+	result, err := a.queries.GetAccountAndUserBySub(a.ctx, claims.Sub)
 
 	user := queries.User{
 		ID:        result.UserID,
@@ -40,15 +29,13 @@ func (a *Storage) CreateUserAccount(claims types.OIDCClaims, token types.OAuthTo
 	}
 
 	if err == sql.ErrNoRows {
-		user, err = a.queries.CreateUser(a.context, uuid.New())
+		user, err = a.queries.CreateUser(a.ctx, uuid.New())
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	fmt.Println(strings.Join(token.Scope, " "), time.Now().Add(time.Duration(int64(token.ExpiresIn))*time.Second))
-
-	account, err := a.queries.CreateAccount(a.context, queries.CreateAccountParams{
+	account, err := a.queries.CreateAccount(a.ctx, queries.CreateAccountParams{
 		ID:               uuid.New(),
 		UserID:           user.ID,
 		Picture:          claims.Picture,

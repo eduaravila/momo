@@ -1,0 +1,67 @@
+openapi: "3.0.0"
+info:
+  title: Auth API
+  version: 1.0.0
+  description: Auth API works with multiple auth providers
+  contact:
+    name: Eduardo Avila
+    url: https://eduaravila.com/
+servers:
+  - url: https://{hostname}:{port}/api
+    variables:
+      hostname:
+        default: localhost
+        description: The hostname of the API serve
+      port:
+        enum:
+        - '8080'
+        default: '8080'
+        description: The port of the API server
+paths:
+  /oauth/twitch/callback:
+    get:
+      operationId: oauthTwitchCallback      
+      description: |
+        creates a session
+        redirects to the frontend
+        creates a session token and sets it as a cookie
+      tags:
+        - oauth
+      parameters:        
+        - $ref: '#/components/parameters/codeParam'        
+        - $ref: '#/components/parameters/scopeParam'
+      responses:
+        '302':
+          description: Redirect to the frontend with a session token
+          headers:
+            Location:
+              schema:
+                type: string
+                example: https://example.com
+              description: Redirect to the frontend
+            Set-Cookie:
+              schema:
+                type: string
+                example: session=token
+              description: Session token
+
+
+
+components:
+  parameters:
+    codeParam:
+      name: code
+      in: query
+      required: true
+      schema:
+        type: string
+        example: 1234567890
+      description: OAuth code
+    scopeParam:
+      name: scope
+      in: query
+      required: true
+      schema:
+        type: string
+        example: user:read:email
+      description: OAuth scope

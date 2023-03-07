@@ -7,10 +7,46 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
-	"github.com/eduaravila/momo/apps/auth/internal/types"
 	"github.com/eduaravila/momo/packages/router"
 )
+
+type (
+	TokenBodyRequest struct {
+		ClientID     string `json:"client_id"`
+		ClientSecret string `json:"client_secret"`
+		Code         string `json:"code"`
+		GrantType    string `json:"grant_type"`
+		RedirectURI  string `json:"redirect_uri"`
+	}
+
+	OAuthToken struct {
+		AccessToken  string   `json:"access_token"`
+		RefreshToken string   `json:"refresh_token"`
+		ExpiresIn    int      `json:"expires_in"`
+		TokenType    string   `json:"token_type"`
+		Scope        []string `json:"scope"`
+	}
+)
+
+type OIDCClaims struct {
+	Aud              string    `json:"aud"`
+	Exp              int64     `json:"exp"`
+	Iat              int64     `json:"iat"`
+	Iss              string    `json:"iss"`
+	Sub              string    `json:"sub"`
+	Email            string    `json:"email"`
+	EmailVerified    bool      `json:"email_verified"`
+	Picture          string    `json:"picture"`
+	PreferedUsername string    `json:"preferred_username"`
+	UpdatedAt        time.Time `json:"updated_at"`
+}
+
+type Metadata struct {
+	UserAgent string
+	IPAddress string
+}
 
 type IConfig interface {
 	SetBaseURL(baseurl string)
@@ -39,8 +75,8 @@ const (
 	userInfoPath = "/oauth2/userinfo" // GET
 )
 
-func (t *TwitchAPI) GetToken(code string) (*types.OAuthToken, error) {
-	body := types.TokenBodyRequest{
+func (t *TwitchAPI) GetToken(code string) (*OAuthToken, error) {
+	body := TokenBodyRequest{
 		ClientID:     os.Getenv("TWITCH_APPLICATION_CLIEND_ID"),
 		ClientSecret: os.Getenv("TWITCH_APPLICATION_CLIENT_SECRET"),
 		Code:         code,
@@ -67,7 +103,7 @@ func (t *TwitchAPI) GetToken(code string) (*types.OAuthToken, error) {
 		return nil, errors.New("gettoken: error getting token")
 	}
 
-	var tokenRespose types.OAuthToken
+	var tokenRespose OAuthToken
 	err = json.NewDecoder(res.Body).Decode(&tokenRespose)
 
 	if err != nil {
@@ -77,7 +113,7 @@ func (t *TwitchAPI) GetToken(code string) (*types.OAuthToken, error) {
 	return &tokenRespose, nil
 }
 
-func (t *TwitchAPI) GetOidcUserInfo(oidcToken *types.OAuthToken) (*types.OIDCClaims, error) {
+func (t *TwitchAPI) GetOidcUserInfo(oidcToken *OAuthToken) (*OIDCClaims, error) {
 	// get user info
 	userInfo, err := router.Get(router.RequestParams{
 		Url: fmt.Sprintf("%s%s", os.Getenv("TWITCH_API_URL"), userInfoPath),
@@ -90,7 +126,7 @@ func (t *TwitchAPI) GetOidcUserInfo(oidcToken *types.OAuthToken) (*types.OIDCCla
 		return nil, err
 	}
 
-	var userInfoRespose types.OIDCClaims
+	var userInfoRespose OIDCClaims
 
 	if err = json.NewDecoder(userInfo.Body).Decode(&userInfoRespose); err != nil {
 		return nil, err
