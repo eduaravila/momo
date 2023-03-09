@@ -1,4 +1,4 @@
-package oidc
+package session
 
 import (
 	"github.com/eduaravila/momo/apps/auth/internal/adapter"
@@ -6,14 +6,6 @@ import (
 	"github.com/eduaravila/momo/apps/auth/internal/types"
 	"github.com/eduaravila/momo/packages/db/queries"
 )
-type Storage interface {
-	CreateSession(ctx, context.Context, .Session) (queries.Session, error)
-	CreateUserAccount(types.OIDCClaims, types.OAuthToken) (*storage.UserAccount, error)
-}
-
-
-
-
 
 type OIDC struct {
 	code string

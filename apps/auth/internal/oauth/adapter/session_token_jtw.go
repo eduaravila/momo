@@ -8,53 +8,64 @@ import (
 )
 
 type SessionToken struct {
-	Token *jwt.Token
+	Claims jwt.RegisteredClaims
 }
 
-func DefaultClaimsForSession(id string) jwt.RegisteredClaims {
+type JWTToken struct {
+	token *jwt.Token
+}
+
+func DefaultClaimsForSessionInclude(id string) jwt.RegisteredClaims {
 	exp := time.Now().Add(1 * time.Hour)
 
 	return jwt.RegisteredClaims{
-		Subject:   id,
+		Subject: id,
+
 		ExpiresAt: jwt.NewNumericDate(exp),
 		IssuedAt:  jwt.NewNumericDate(time.Now()),
 	}
 }
 
-func (t *SessionToken) Claims() jwt.RegisteredClaims {
-	return t.Token.Claims.(jwt.RegisteredClaims)
-}
-
-func NewSessionToken(subject string) *SessionToken {
+func NewJwtTokenCreator(claims jwt.RegisteredClaims) *SessionToken {
 	return &SessionToken{
-		jwt.NewWithClaims(jwt.SigningMethodES256, DefaultClaimsForSession(subject)),
+		claims,
 	}
 }
 
-func (t *SessionToken) SetClaims(claims jwt.RegisteredClaims) *SessionToken {
-	t.Token.Claims = claims
-	return t
+func (s *SessionToken) CreateSessionToken(subject string) (string, error) {
+	token := NewJWTToken(DefaultClaimsForSessionInclude((subject)))
+
+	return token.Sign()
 }
 
-func (t *SessionToken) Sign() (string, error) {
+func NewJWTToken(claims jwt.RegisteredClaims) *JWTToken {
+	return &JWTToken{
+		token: jwt.NewWithClaims(jwt.SigningMethodES256, claims),
+	}
+}
+
+func (t *JWTToken) Sign() (string, error) {
 	decodedKey, err := jwt.ParseECPrivateKeyFromPEM([]byte(os.Getenv("JWT_PRIVATE_KEY")))
 	if err != nil {
 		return "", err
 	}
-	return t.Token.SignedString(decodedKey)
+
+	return t.token.SignedString(decodedKey)
 }
 
-func (t *SessionToken) Verify(tokenString string) error {
+func (t *JWTToken) Verify(tokenString string) error {
 	decodedKey, err := jwt.ParseECPublicKeyFromPEM([]byte(os.Getenv("JWT_PUBLIC_KEY")))
 	if err != nil {
 		return err
 	}
+
 	_, err = jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		return decodedKey, nil
 	})
+
 	return err
 }
 
-func (t *SessionToken) String() string {
-	return t.Token.Raw
+func (t *JWTToken) String() string {
+	return t.token.Raw
 }

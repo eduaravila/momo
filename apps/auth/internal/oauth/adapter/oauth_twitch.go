@@ -113,7 +113,7 @@ func (t *TwitchAPI) GetToken(code string) (*OAuthToken, error) {
 	return &tokenRespose, nil
 }
 
-func (t *TwitchAPI) GetOidcUserInfo(oidcToken *OAuthToken) (*OIDCClaims, error) {
+func (t *TwitchAPI) GetOIDCUserInfo(oidcToken *OAuthToken) (*OIDCClaims, error) {
 	// get user info
 	userInfo, err := router.Get(router.RequestParams{
 		Url: fmt.Sprintf("%s%s", os.Getenv("TWITCH_API_URL"), userInfoPath),

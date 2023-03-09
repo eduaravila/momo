@@ -7,16 +7,19 @@ import (
 	"os"
 	"strings"
 
-	"github.com/eduaravila/momo/apps/auth/internal/adapter"
-	"github.com/eduaravila/momo/apps/auth/internal/oidc"
-	"github.com/eduaravila/momo/apps/auth/internal/storage"
-	"github.com/eduaravila/momo/apps/auth/internal/types"
+	"github.com/eduaravila/momo/apps/auth/internal/oauth/adapter"
+	"github.com/eduaravila/momo/apps/auth/internal/oauth/app"
+	"github.com/eduaravila/momo/apps/auth/internal/oauth/storage"
 	"github.com/eduaravila/momo/packages/db/queries"
 	"github.com/eduaravila/momo/packages/router"
 	"github.com/google/uuid"
 )
 
 type requestIDKey string
+
+type HTTP struct {
+	app app.Application
+}
 
 type HTTPWithError func(w http.ResponseWriter, r *http.Request) error
 
