@@ -2,6 +2,7 @@ package session
 
 import (
 	"errors"
+	"time"
 )
 
 type Account struct {
@@ -17,6 +18,8 @@ type Account struct {
 	Iss   string
 	Sub   string
 	Scope []string
+
+	ExpiredAt time.Time
 }
 
 func NewAccount(

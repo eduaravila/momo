@@ -1,8 +1,11 @@
 package adapter
 
 import (
+	"errors"
 	"os"
 	"time"
+
+	"github.com/eduaravila/momo/apps/auth/internal/oauth/domain/session"
 
 	jwt "github.com/golang-jwt/jwt/v4"
 )
@@ -32,10 +35,17 @@ func NewJwtTokenCreator(claims jwt.RegisteredClaims) *SessionToken {
 	}
 }
 
-func (s *SessionToken) CreateSessionToken(subject string) (string, error) {
+func (s *SessionToken) CreateSessionToken(subject string) (session.Token, error) {
+	claims := DefaultClaimsForSessionInclude(subject)
 	token := NewJWTToken(DefaultClaimsForSessionInclude((subject)))
+	signedToken, err := token.Sign()
 
-	return token.Sign()
+	if err != nil {
+		return session.Token{}, errors.Join(err, errors.New("failed creating session token"))
+	}
+
+	return session.NewSessionToken(signedToken, true,
+		session.NewClaims(claims.Issuer, claims.Subject, claims.Audience, claims.ExpiresAt.Time, claims.NotBefore.Time, claims.IssuedAt.Time, claims.ID)), nil
 }
 
 func NewJWTToken(claims jwt.RegisteredClaims) *JWTToken {
@@ -64,8 +74,4 @@ func (t *JWTToken) Verify(tokenString string) error {
 	})
 
 	return err
-}
-
-func (t *JWTToken) String() string {
-	return t.token.Raw
 }

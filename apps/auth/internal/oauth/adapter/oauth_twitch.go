@@ -30,7 +30,7 @@ type (
 	}
 )
 
-type OIDCClaims struct {
+type OIDCClaimsModel struct {
 	Aud              string    `json:"aud"`
 	Exp              int64     `json:"exp"`
 	Iat              int64     `json:"iat"`
@@ -75,7 +75,7 @@ const (
 	userInfoPath = "/oauth2/userinfo" // GET
 )
 
-func (t *TwitchAPI) GetToken(code string) (*OAuthToken, error) {
+func (t *TwitchAPI) GetAuthorizationInformation(code string) (*OAuthToken, error) {
 	body := TokenBodyRequest{
 		ClientID:     os.Getenv("TWITCH_APPLICATION_CLIEND_ID"),
 		ClientSecret: os.Getenv("TWITCH_APPLICATION_CLIENT_SECRET"),
@@ -113,7 +113,7 @@ func (t *TwitchAPI) GetToken(code string) (*OAuthToken, error) {
 	return &tokenRespose, nil
 }
 
-func (t *TwitchAPI) GetOIDCUserInfo(oidcToken *OAuthToken) (*OIDCClaims, error) {
+func (t *TwitchAPI) GetOIDCUserInfo(oidcToken *OAuthToken) (*OIDCClaimsModel, error) {
 	// get user info
 	userInfo, err := router.Get(router.RequestParams{
 		Url: fmt.Sprintf("%s%s", os.Getenv("TWITCH_API_URL"), userInfoPath),
@@ -126,7 +126,7 @@ func (t *TwitchAPI) GetOIDCUserInfo(oidcToken *OAuthToken) (*OIDCClaims, error) 
 		return nil, err
 	}
 
-	var userInfoRespose OIDCClaims
+	var userInfoRespose OIDCClaimsModel
 
 	if err = json.NewDecoder(userInfo.Body).Decode(&userInfoRespose); err != nil {
 		return nil, err
@@ -150,3 +150,19 @@ func NewTwitchAPIWithOpts(config IConfig) *TwitchAPI {
 
 	return NewTwitchAPI()
 }
+
+/* TODO convert twitch claims to user model
+ID:               uuid.New(),
+		UserID:           user.ID,
+		Picture:          claims.Picture,
+		Email:            claims.Email,
+		PreferedUsername: claims.PreferedUsername,
+		AccessToken:      token.AccessToken,
+		RefreshToken:     token.RefreshToken,
+		Iss:              claims.Iss,
+		Sub:              claims.Sub,
+		CreatedAt:        time.Time{},
+		UpdatedAt:        time.Time{},
+		ExpiredAt:        time.Now().Add(time.Duration(int64(token.ExpiresIn)) * time.Second),
+		Scope:            strings.Join(token.Scope, " "),
+*/

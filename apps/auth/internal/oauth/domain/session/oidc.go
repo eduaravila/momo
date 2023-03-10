@@ -1,19 +1,33 @@
 package session
 
 import (
+	"time"
+
 	"github.com/eduaravila/momo/apps/auth/internal/adapter"
 	"github.com/eduaravila/momo/apps/auth/internal/factory"
 	"github.com/eduaravila/momo/apps/auth/internal/types"
 	"github.com/eduaravila/momo/packages/db/queries"
 )
 
-type OIDC struct {
-	code string
+type OIDCClaims struct {
+	Aud              string
+	Exp              int64
+	Iat              int64
+	Iss              string
+	Sub              string
+	Email            string
+	EmailVerified    bool
+	Picture          string
+	PreferedUsername string
+	UpdatedAt        time.Time
 }
 
-type LoginOIDCService struct {
-	storage Storage
-	api     AuthAPI
+type OIDCOAuthToken struct {
+	AccessToken  string
+	RefreshToken string
+	ExpiresIn    int
+	TokenType    string
+	Scope        []string
 }
 
 func NewAuthService(storage Storage, api *adapter.TwitchAPI) *LoginOIDCService {

@@ -5,6 +5,6 @@ import (
 )
 
 type Storage interface {
-	CreateSession(context.Context, Session) (Session, error)
-	CreateUserAccount(context.Context, OIDCClaims, OAuthToken) (*UserAccount, error)
+	AddSession(context.Context, *Session) error
+	AddAccountWithUser(context.Context, OIDCClaims, *Account) error
 }

@@ -3,11 +3,13 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/eduaravila/momo/apps/auth/internal/oauth/domain/session"
 	"github.com/eduaravila/momo/packages/db/queries"
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
@@ -57,67 +59,45 @@ func (s OauthPostgresStorage) CreateUser() (queries.User, error) {
 	)
 }
 
-func (s OauthPostgresStorage) CreateAccount(account queries.Account) (queries.Account, error) {
-	return s.queries.CreateAccount(s.ctx,
-		queries.CreateAccountParams{
-			ID:               uuid.New(),
-			Sub:              account.Sub,
-			Email:            account.Email,
-			UserID:           account.UserID,
-			Picture:          account.Picture,
-			Iss:              account.Iss,
-			Scope:            account.Scope,
-			ExpiredAt:        account.ExpiredAt,
-			PreferedUsername: account.PreferedUsername,
-			AccessToken:      account.AccessToken,
-			RefreshToken:     account.RefreshToken,
-		},
-	)
-}
-
 func (s OauthPostgresStorage) GetAccountAndUserBySub(sub string) (queries.GetAccountAndUserBySubRow, error) {
 	return s.queries.GetAccountAndUserBySub(s.ctx, sub)
 }
 
-func (a *OauthPostgresStorage) CreateUserAccount(claims types.OIDCClaims, token types.OAuthToken) (*UserAccount, error) {
-	result, err := a.queries.GetAccountAndUserBySub(a.ctx, claims.Sub)
-
-	user := queries.User{
-		ID:        result.UserID,
-		CreatedAt: result.CreatedAt_2,
-		UpdatedAt: result.UpdatedAt_2,
-	}
+func (a *OauthPostgresStorage) AddAccountWithUser(ctx context.Context, account session.Account) error {
+	_, err := a.queries.GetAccountAndUserBySub(a.ctx, account.Sub)
 
 	if err != nil && err != sql.ErrNoRows {
-		return nil, err
+		return err
 	}
 
 	if err == sql.ErrNoRows {
-		user, err = a.queries.CreateUser(a.ctx, uuid.New())
+		_, err = a.queries.CreateUser(a.ctx, uuid.New())
 		if err != nil {
-			return nil, err
+			return errors.Join(err, errors.New("error creating user"))
 		}
 	}
 
-	account, err := a.queries.CreateAccount(a.ctx, queries.CreateAccountParams{
-		ID:               uuid.New(),
-		UserID:           user.ID,
-		Picture:          claims.Picture,
-		Email:            claims.Email,
-		PreferedUsername: claims.PreferedUsername,
-		AccessToken:      token.AccessToken,
-		RefreshToken:     token.RefreshToken,
-		Iss:              claims.Iss,
-		Sub:              claims.Sub,
-		CreatedAt:        time.Time{},
-		UpdatedAt:        time.Time{},
-		ExpiredAt:        time.Now().Add(time.Duration(int64(token.ExpiresIn)) * time.Second),
-		Scope:            strings.Join(token.Scope, " "),
+	accountUUID, _ := uuid.FromBytes([]byte(account.ID))
+	userUUID, _ := uuid.FromBytes([]byte(account.ID))
+	_, err = a.queries.CreateAccount(ctx, queries.CreateAccountParams{
+		ID:               accountUUID,
+		UserID:           userUUID,
+		Sub:              account.Sub,
+		Email:            account.Email,
+		PreferedUsername: account.PreferedUsername,
+		UpdatedAt:        time.Now(),
+		CreatedAt:        time.Now(),
+		Picture:          account.Picture,
+		AccessToken:      account.AccessToken,
+		RefreshToken:     account.RefreshToken,
+		Iss:              account.Iss,
+		ExpiredAt:        account.ExpiredAt,
+		Scope:            strings.Join(account.Scope, " "),
 	})
 
 	if err != nil {
-		return nil, err
+		return errors.Join(err, errors.New("error creating account"))
 	}
 
-	return &UserAccount{user, account}, nil
+	return nil
 }
