@@ -2,6 +2,7 @@ package adapter
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/eduaravila/momo/apps/auth/internal/oauth/domain/session"
 	"github.com/eduaravila/momo/packages/router"
 )
 
@@ -75,7 +77,7 @@ const (
 	userInfoPath = "/oauth2/userinfo" // GET
 )
 
-func (t *TwitchAPI) GetAuthorizationInformation(code string) (*OAuthToken, error) {
+func (t *TwitchAPI) GetAccessInformation(ctx context.Context, code string) (*session.OIDCAccessToken, error) {
 	body := TokenBodyRequest{
 		ClientID:     os.Getenv("TWITCH_APPLICATION_CLIEND_ID"),
 		ClientSecret: os.Getenv("TWITCH_APPLICATION_CLIENT_SECRET"),
@@ -110,15 +112,22 @@ func (t *TwitchAPI) GetAuthorizationInformation(code string) (*OAuthToken, error
 		return nil, err
 	}
 
-	return &tokenRespose, nil
+	return session.UnmarshalOIDCAccessTokenFromDatabase(
+		tokenRespose.AccessToken,
+		tokenRespose.RefreshToken,
+		tokenRespose.ExpiresIn,
+		tokenRespose.TokenType,
+		tokenRespose.Scope,
+	), nil
 }
 
-func (t *TwitchAPI) GetOIDCUserInfo(oidcToken *OAuthToken) (*OIDCClaimsModel, error) {
+func (t *TwitchAPI) getAccountInformation(ctx context.Context, accessToken string) (*session.OIDCAccount, error) {
+
 	// get user info
 	userInfo, err := router.Get(router.RequestParams{
 		Url: fmt.Sprintf("%s%s", os.Getenv("TWITCH_API_URL"), userInfoPath),
 		Headers: [][]string{
-			{"Authorization", "Bearer " + oidcToken.AccessToken},
+			{"Authorization", "Bearer " + accessToken},
 		},
 		Body: nil,
 	})
@@ -132,7 +141,36 @@ func (t *TwitchAPI) GetOIDCUserInfo(oidcToken *OAuthToken) (*OIDCClaimsModel, er
 		return nil, err
 	}
 
-	return &userInfoRespose, nil
+	return session.NewOIDCAccount(
+		userInfoRespose.Aud,
+		userInfoRespose.Exp,
+		userInfoRespose.Iat,
+		userInfoRespose.Iss,
+		userInfoRespose.Sub,
+		userInfoRespose.Email,
+		userInfoRespose.EmailVerified,
+		userInfoRespose.Picture,
+		userInfoRespose.PreferedUsername,
+		userInfoRespose.UpdatedAt,
+	)
+
+}
+
+func (t *TwitchAPI) GetAccount(ctx context.Context, code, accountUUID, userUUID string) (*session.Account, error) {
+	accessInfo, err := t.GetAccessInformation(ctx, code)
+
+	if err != nil {
+		return nil, errors.Join(err, errors.New("failed to get token"))
+	}
+
+	accountInfo, err := t.getAccountInformation(ctx, accessInfo.AccessToken)
+	return session.NewAccountFromOIDC(
+		accountUUID,
+		userUUID,
+		accountInfo,
+		accessInfo,
+	)
+
 }
 
 func NewTwitchAPI() *TwitchAPI {

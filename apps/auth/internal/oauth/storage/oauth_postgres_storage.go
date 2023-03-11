@@ -63,7 +63,7 @@ func (s OauthPostgresStorage) GetAccountAndUserBySub(sub string) (queries.GetAcc
 	return s.queries.GetAccountAndUserBySub(s.ctx, sub)
 }
 
-func (a *OauthPostgresStorage) AddAccountWithUser(ctx context.Context, account session.Account) error {
+func (a *OauthPostgresStorage) AddAccountWithUser(ctx context.Context, account *session.Account) error {
 	_, err := a.queries.GetAccountAndUserBySub(a.ctx, account.Sub)
 
 	if err != nil && err != sql.ErrNoRows {

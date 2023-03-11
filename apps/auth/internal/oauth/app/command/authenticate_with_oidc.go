@@ -17,44 +17,49 @@ type GenerateSession struct {
 	code        string
 	scope       []string
 	SessionUUID string
+	AccountUUID string
 }
 
-type generateSessionTokenHandler struct {
+type authenticateWithOIDCHandler struct {
 	oAuthService OAuthService
 	tokenService TokenService
 	repo         session.Storage
 }
 
-func NewGenerateSessionTokenHandler(oAuthRepository OAuthService, repo session.Storage) decorators.CommandHandler[GenerateSession] {
-	return &generateSessionTokenHandler{
+type AuthenticateWithOIDCHandler decorators.CommandHandler[authenticateWithOIDCHandler]
+
+func NewAuthenticateWithOIDCHandler(oAuthRepository OAuthService, repo session.Storage) decorators.CommandHandler[GenerateSession] {
+	return &authenticateWithOIDCHandler{
 		oAuthService: oAuthRepository,
 		repo:         repo,
 	}
 }
 
-func (g *generateSessionTokenHandler) Handle(ctx context.Context, cmd GenerateSession) error {
+func (g *authenticateWithOIDCHandler) Handle(ctx context.Context, cmd GenerateSession) error {
 	accessInfo, err := g.oAuthService.GetAuthorizationInformation(ctx, cmd.code)
 	if err != nil {
 		return errors.Join(err, errors.New("failed to get token"))
 	}
-	claims, err := g.oAuthService.GetOIDCUserInfo(ctx, accessInfo.AccessToken)
-
+	claims, err := g.oAuthService.GetOIDCAccount(ctx, accessInfo.AccessToken)
 
 	if err != nil {
 		return errors.Join(err, errors.New("failed to get user info"))
 	}
 
-	userAccount, err := g..CreateUserAccount(*userInfoResponse, *tokenResponse)
-	if err != nil {
+	user, err := g.repo.FindUserFromSub(ctx, claims.Sub)
 
-		return nil, err
+	account, err := session.NewAccount(cmd.AccountUUID, user.ID, accessInfo.AccessToken, accessInfo.RefreshToken, claims.Picture, claims.Email, claims.PreferedUsername, claims.Iss, claims.Sub, accessInfo.Scope)
+
+	err = g.repo.AddAccountWithUser(ctx, account)
+	if err != nil {
+		return errors.Join(err, errors.New("failed to add account"))
 	}
 
 	token := factory.NewSessionToken(userAccount.User.ID.String())
 	tokenString, err := token.Sign()
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	session, err := t.storage.CreateSession(queries.Session{

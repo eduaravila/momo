@@ -2,14 +2,9 @@ package session
 
 import (
 	"time"
-
-	"github.com/eduaravila/momo/apps/auth/internal/adapter"
-	"github.com/eduaravila/momo/apps/auth/internal/factory"
-	"github.com/eduaravila/momo/apps/auth/internal/types"
-	"github.com/eduaravila/momo/packages/db/queries"
 )
 
-type OIDCClaims struct {
+type OIDCAccount struct {
 	Aud              string
 	Exp              int64
 	Iat              int64
@@ -22,7 +17,7 @@ type OIDCClaims struct {
 	UpdatedAt        time.Time
 }
 
-type OIDCOAuthToken struct {
+type OIDCAccessToken struct {
 	AccessToken  string
 	RefreshToken string
 	ExpiresIn    int
@@ -30,41 +25,52 @@ type OIDCOAuthToken struct {
 	Scope        []string
 }
 
-func NewAuthService(storage Storage, api *adapter.TwitchAPI) *LoginOIDCService {
-	return &LoginOIDCService{storage: storage, api: api}
+type OIDCAccount struct {
+	OIDCAccountInformation
+	OIDCAccessToken
 }
 
-func (t *LoginOIDCService) LogIn(code string, metadata types.Metadata) (*queries.Session, error) {
-	tokenResponse, err := t.api.GetToken(code)
-	if err != nil {
-		return nil, err
+func UnmarshalOIDCAccessTokenFromDatabase(
+	accessToken string,
+	refreshToken string,
+	expiresIn int,
+	tokenType string,
+	scope []string,
+) *OIDCAccessToken {
+	return &OIDCAccessToken{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		ExpiresIn:    expiresIn,
+		TokenType:    tokenType,
+		Scope:        scope,
 	}
+}
 
-	userInfoResponse, err := t.api.GetOidcUserInfo(tokenResponse)
-	if err != nil {
-		return nil, err
-	}
+func NewOIDCAccount(
+	aud string,
+	exp int64,
+	iat int64,
+	iss string,
+	sub string,
+	email string,
+	emailVerified bool,
+	picture string,
+	preferedUsername string,
+	updatedAt time.Time,
 
-	userAccount, err := t.storage.CreateUserAccount(*userInfoResponse, *tokenResponse)
-	if err != nil {
+) (*OIDCAccount, error) {
 
-		return nil, err
-	}
-
-	token := factory.NewSessionToken(userAccount.User.ID.String())
-	tokenString, err := token.Sign()
-
-	if err != nil {
-		return nil, err
-	}
-
-	session, err := t.storage.CreateSession(queries.Session{
-		ExpiredAt:    token.Claims().ExpiresAt.Time,
-		UserAgent:    metadata.UserAgent,
-		UserID:       userAccount.User.ID,
-		SessionToken: tokenString,
-		IpAddress:    metadata.IPAddress,
-	})
-
-	return &session, err
+	// TODO: Validate input
+	return &OIDCAccount{
+		Aud:              aud,
+		Exp:              exp,
+		Iat:              iat,
+		Iss:              iss,
+		Sub:              sub,
+		Email:            email,
+		EmailVerified:    emailVerified,
+		Picture:          picture,
+		PreferedUsername: preferedUsername,
+		UpdatedAt:        updatedAt,
+	}, nil
 }

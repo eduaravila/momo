@@ -7,8 +7,7 @@ import (
 )
 
 type OAuthService interface {
-	GetAuthorizationInformation(ctx context.Context, code string) (session.OIDCOAuthToken, error)
-	GetOIDCUserInfo(ctx context.Context, accessToken string) (session.OIDCClaims, error)
+	GetAccount(ctx context.Context, accessToken string) (*session.Account, error)
 }
 
 type TokenService interface {
