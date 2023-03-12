@@ -63,7 +63,7 @@ func (s OauthPostgresStorage) GetAccountAndUserBySub(sub string) (queries.GetAcc
 	return s.queries.GetAccountAndUserBySub(s.ctx, sub)
 }
 
-func (a *OauthPostgresStorage) AddAccountWithUser(ctx context.Context, account *session.Account) error {
+func (a *OauthPostgresStorage) AddAccountWithUser(ctx context.Context, account *session.Account, userUUID string) error {
 	_, err := a.queries.GetAccountAndUserBySub(a.ctx, account.Sub)
 
 	if err != nil && err != sql.ErrNoRows {
@@ -71,17 +71,18 @@ func (a *OauthPostgresStorage) AddAccountWithUser(ctx context.Context, account *
 	}
 
 	if err == sql.ErrNoRows {
-		_, err = a.queries.CreateUser(a.ctx, uuid.New())
+		id, err := uuid.FromBytes([]byte(userUUID))
+		_, err = a.queries.CreateUser(a.ctx, id)
 		if err != nil {
 			return errors.Join(err, errors.New("error creating user"))
 		}
 	}
 
-	accountUUID, _ := uuid.FromBytes([]byte(account.ID))
-	userUUID, _ := uuid.FromBytes([]byte(account.ID))
+	parsedAccountUUID, _ := uuid.FromBytes([]byte(account.ID))
+	parsedUserUUID, _ := uuid.FromBytes([]byte(account.ID))
 	_, err = a.queries.CreateAccount(ctx, queries.CreateAccountParams{
-		ID:               accountUUID,
-		UserID:           userUUID,
+		ID:               parsedAccountUUID,
+		UserID:           parsedUserUUID,
 		Sub:              account.Sub,
 		Email:            account.Email,
 		PreferedUsername: account.PreferedUsername,

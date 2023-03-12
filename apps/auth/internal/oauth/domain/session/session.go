@@ -2,17 +2,41 @@ package session
 
 import (
 	"time"
-
-	"github.com/google/uuid"
 )
 
 type Session struct {
-	ID           uuid.UUID
-	UserID       uuid.UUID
-	CreatedAt    time.Time
+	ID           string
+	UserID       string
 	ExpiredAt    time.Time
-	SessionToken string
-	IpAddress    string
-	UserAgent    string
+	SessionToken *Token
+	metadata     *ClientMetadata
 	IsValid      bool
+}
+
+func NewSessionMetadata(
+	userAgent string,
+	ipAddress string,
+) *ClientMetadata {
+	return &ClientMetadata{
+		UserAgent: userAgent,
+		IPAddress: ipAddress,
+	}
+}
+
+func NewSession(
+	id string,
+	userUUID string,
+	expiredAt time.Time,
+	sessionToken *Token,
+	userAgent string,
+	ipAddress string,
+) *Session {
+	return &Session{
+		ID:           id,
+		UserID:       userUUID,
+		ExpiredAt:    expiredAt,
+		SessionToken: sessionToken,
+		IsValid:      sessionToken.Valid,
+		metadata:     NewSessionMetadata(userAgent, ipAddress),
+	}
 }

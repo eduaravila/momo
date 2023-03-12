@@ -6,6 +6,6 @@ import (
 
 type Storage interface {
 	AddSession(context.Context, *Session) error
-	AddAccountWithUser(context.Context, *Account) error
+	AddAccountWithUser(ctx context.Context, account *Account, userUUID string) error
 	FindUserFromSub(context.Context, string) (*User, error)
 }

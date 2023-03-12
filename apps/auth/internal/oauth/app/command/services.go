@@ -7,9 +7,9 @@ import (
 )
 
 type OAuthService interface {
-	GetAccount(ctx context.Context, accessToken string) (*session.Account, error)
+	GetAccount(ctx context.Context, accessToken, accountUUID, userUUID string) (*session.Account, error)
 }
 
 type TokenService interface {
-	CreateSessionToken(ctx context.Context, subject string) (session.Token, error)
+	CreateSessionToken(ctx context.Context, subject string) (*session.Token, error)
 }

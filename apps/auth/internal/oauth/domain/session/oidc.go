@@ -25,11 +25,6 @@ type OIDCAccessToken struct {
 	Scope        []string
 }
 
-type OIDCAccount struct {
-	OIDCAccountInformation
-	OIDCAccessToken
-}
-
 func UnmarshalOIDCAccessTokenFromDatabase(
 	accessToken string,
 	refreshToken string,
@@ -57,9 +52,7 @@ func NewOIDCAccount(
 	picture string,
 	preferedUsername string,
 	updatedAt time.Time,
-
 ) (*OIDCAccount, error) {
-
 	// TODO: Validate input
 	return &OIDCAccount{
 		Aud:              aud,

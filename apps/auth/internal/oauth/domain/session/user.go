@@ -9,3 +9,8 @@ type User struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
+
+type ClientMetadata struct {
+	UserAgent string
+	IPAddress string
+}
