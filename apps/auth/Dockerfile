@@ -4,16 +4,13 @@ LABEL maintainer="EduardoAvila <me@eduaravila.com>"
 
 COPY go.* /github.com/eduaravila/momo/
 COPY packages/router /github.com/eduaravila/momo/packages/router
-COPY packages/db /github.com/eduaravila/momo/packages/db
-
+COPY packages/postgres /github.com/eduaravila/momo/packages/postgres
 
 COPY apps/auth /github.com/eduaravila/momo/apps/auth
 
-WORKDIR /github.com/eduaravila/momo/apps/auth
-
-RUN go install github.com/cosmtrek/air@latest
-
 RUN go mod download
+
+WORKDIR /github.com/eduaravila/momo/apps/auth
 
 
 # DEBUG MODE
@@ -27,6 +24,7 @@ CMD [ "/go/bin/dlv", "--listen=:4000", "--headless=true", "--log=true", "--accep
 
 FROM base as dev
 
+RUN go install github.com/cosmtrek/air@latest
 
 FROM base as prod
 

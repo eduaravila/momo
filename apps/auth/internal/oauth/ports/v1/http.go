@@ -10,7 +10,7 @@ import (
 	"github.com/eduaravila/momo/apps/auth/internal/oauth/adapter"
 	"github.com/eduaravila/momo/apps/auth/internal/oauth/app"
 	"github.com/eduaravila/momo/apps/auth/internal/oauth/storage"
-	"github.com/eduaravila/momo/packages/db/queries"
+	"github.com/eduaravila/momo/packages/postgres/queries"
 	"github.com/eduaravila/momo/packages/router"
 	"github.com/google/uuid"
 )

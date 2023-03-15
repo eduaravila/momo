@@ -3,7 +3,7 @@ package storage
 import (
 	"context"
 
-	"github.com/eduaravila/momo/packages/db/queries"
+	"github.com/eduaravila/momo/packages/postgres/queries"
 	"github.com/google/uuid"
 )
 

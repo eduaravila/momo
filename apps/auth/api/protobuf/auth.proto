@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package auth;
+
+option go_package = "github.com/eduaravila/momo/packages/auth";
+
+
+service SessionService {
+    rpc IsValidSession(IsValidSessionTokenRequest) returns (IsValidSessionTokenResponse);
+}
+
+// Request body to check the validity of a session token
+message IsValidSessionTokenRequest {
+    // Required, session token (for example, a JWT) to check 
+    string token = 1;
+}
+
+message IsValidSessionTokenResponse {
+    bool valid = 1;
+}

@@ -38,3 +38,5 @@ yarn-error.log*
 *tmp*
 
 
+go.work
+go.work.sum

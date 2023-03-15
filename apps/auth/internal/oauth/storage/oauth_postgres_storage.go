@@ -10,18 +10,17 @@ import (
 	"time"
 
 	"github.com/eduaravila/momo/apps/auth/internal/oauth/domain/session"
-	"github.com/eduaravila/momo/packages/db/queries"
+	"github.com/eduaravila/momo/packages/postgres/queries"
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
 )
 
 type OauthPostgresStorage struct {
 	queries *queries.Queries
-	ctx     context.Context
 }
 
-func NewStorage(ctx context.Context, queries *queries.Queries) *OauthPostgresStorage {
-	return &OauthPostgresStorage{queries, ctx}
+func NewStorage(queries *queries.Queries) *OauthPostgresStorage {
+	return &OauthPostgresStorage{queries}
 }
 
 func InitPostgresDB() (*sql.DB, error) {
@@ -42,8 +41,8 @@ func InitPostgresDB() (*sql.DB, error) {
 	return db, db.Ping()
 }
 
-func (s OauthPostgresStorage) CreateSession(session queries.Session) (queries.Session, error) {
-	return s.queries.CreateSession(s.ctx, queries.CreateSessionParams{
+func (s OauthPostgresStorage) CreateSession(ctx context.Context, session queries.Session) (queries.Session, error) {
+	return s.queries.CreateSession(ctx, queries.CreateSessionParams{
 		ID:           uuid.New(),
 		ExpiredAt:    session.ExpiredAt,
 		UserAgent:    session.UserAgent,
@@ -53,26 +52,33 @@ func (s OauthPostgresStorage) CreateSession(session queries.Session) (queries.Se
 	})
 }
 
-func (s OauthPostgresStorage) CreateUser() (queries.User, error) {
-	return s.queries.CreateUser(s.ctx,
+func (s OauthPostgresStorage) CreateUser(ctx context.Context) (queries.User, error) {
+	return s.queries.CreateUser(ctx,
 		uuid.New(),
 	)
 }
 
-func (s OauthPostgresStorage) GetAccountAndUserBySub(sub string) (queries.GetAccountAndUserBySubRow, error) {
-	return s.queries.GetAccountAndUserBySub(s.ctx, sub)
+func (o OauthPostgresStorage) GetAccountAndUserBySub(ctx context.Context, sub string) (queries.GetAccountAndUserBySubRow, error) {
+	return o.queries.GetAccountAndUserBySub(ctx, sub)
 }
 
-func (a *OauthPostgresStorage) AddAccountWithUser(ctx context.Context, account *session.Account, userUUID string) error {
-	_, err := a.queries.GetAccountAndUserBySub(a.ctx, account.Sub)
-
+func (o *OauthPostgresStorage) AddAccountWithUser(
+	ctx context.Context,
+	account *session.Account,
+	userUUID string,
+) error {
+	_, err := o.queries.GetAccountAndUserBySub(ctx, account.Sub)
 	if err != nil && err != sql.ErrNoRows {
 		return err
 	}
 
 	if err == sql.ErrNoRows {
 		id, err := uuid.FromBytes([]byte(userUUID))
-		_, err = a.queries.CreateUser(a.ctx, id)
+		if err != nil {
+			return errors.Join(err, errors.New("error parsing user id"))
+		}
+
+		_, err = o.queries.CreateUser(ctx, id)
 		if err != nil {
 			return errors.Join(err, errors.New("error creating user"))
 		}
@@ -80,7 +86,7 @@ func (a *OauthPostgresStorage) AddAccountWithUser(ctx context.Context, account *
 
 	parsedAccountUUID, _ := uuid.FromBytes([]byte(account.ID))
 	parsedUserUUID, _ := uuid.FromBytes([]byte(account.ID))
-	_, err = a.queries.CreateAccount(ctx, queries.CreateAccountParams{
+	_, err = o.queries.CreateAccount(ctx, queries.CreateAccountParams{
 		ID:               parsedAccountUUID,
 		UserID:           parsedUserUUID,
 		Sub:              account.Sub,

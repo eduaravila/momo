@@ -61,7 +61,7 @@ services:
       DATABASE_URL: postgres
     command: sh -c "goose -dir ./migrations postgres "postgresql://postgres:postgres@postgres:5433/postgres" up"
     build:
-      context: ./packages/db
+      context: ./packages/postgres
     links:
       - postgres
     depends_on:
