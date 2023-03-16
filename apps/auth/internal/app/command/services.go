@@ -3,7 +3,7 @@ package command
 import (
 	"context"
 
-	"github.com/eduaravila/momo/apps/auth/internal/oauth/domain/session"
+	"github.com/eduaravila/momo/apps/auth/internal/domain/session"
 )
 
 type OAuthService interface {

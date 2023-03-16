@@ -11,6 +11,9 @@ require (
 )
 
 require (
+	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
+	github.com/deepmap/oapi-codegen v1.12.4 // indirect
+	github.com/go-chi/chi/v5 v5.0.8 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	golang.org/x/net v0.5.0 // indirect
 	golang.org/x/sys v0.4.0 // indirect

@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/eduaravila/momo/apps/auth/internal/oauth/domain/session"
+	"github.com/eduaravila/momo/apps/auth/internal/domain/session"
 	"github.com/eduaravila/momo/packages/decorators"
 )
 

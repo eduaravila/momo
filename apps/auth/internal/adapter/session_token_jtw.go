@@ -45,7 +45,14 @@ func (s *SessionToken) CreateSessionToken(subject string) (session.Token, error)
 	}
 
 	return session.NewSessionToken(signedToken, true,
-		session.NewClaims(claims.Issuer, claims.Subject, claims.Audience, claims.ExpiresAt.Time, claims.NotBefore.Time, claims.IssuedAt.Time, claims.ID)), nil
+		session.NewClaims(
+			claims.Issuer,
+			claims.Subject,
+			claims.Audience,
+			claims.ExpiresAt.Time,
+			claims.NotBefore.Time,
+			claims.IssuedAt.Time,
+			claims.ID)), nil
 }
 
 func NewJWTToken(claims jwt.RegisteredClaims) *JWTToken {

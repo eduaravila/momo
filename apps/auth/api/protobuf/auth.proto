@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package auth;
 
-option go_package = "github.com/eduaravila/momo/packages/auth";
+option go_package = "github.com/eduaravila/momo/packages/genproto/auth";
 
 
 service SessionService {

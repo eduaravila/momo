@@ -1,18 +1,15 @@
 package main
 
 import (
-	"log"
+	"net/http"
+	"os"
 
-	"github.com/eduaravila/momo/packages/postgres/queries"
+	"github.com/eduaravila/momo/packages/server"
 )
 
 func main() {
-	var user queries.User
-	log.Println(user)
-	// 	if err != nil {
-	// 		log.Fatal(err)
-	// 	}
-
-	// router := v1.Handler(queries.New(db), adapter.NewTwitchAPI())
-	// log.Fatal(http.ListenAndServe(":8080", router))
+	port := os.Getenv("AUTH_PORT")
+	server.RunHTTPServer("/api", port, func() http.Handler {
+		return http.NewServeMux()
+	})
 }

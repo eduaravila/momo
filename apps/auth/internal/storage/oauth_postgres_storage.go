@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/eduaravila/momo/apps/auth/internal/oauth/domain/session"
+	"github.com/eduaravila/momo/apps/auth/internal/domain/session"
 	"github.com/eduaravila/momo/packages/postgres/queries"
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"

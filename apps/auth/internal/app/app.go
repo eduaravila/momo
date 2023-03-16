@@ -1,6 +1,6 @@
 package app
 
-import "github.com/eduaravila/momo/apps/auth/internal/oauth/app/command"
+import "github.com/eduaravila/momo/apps/auth/internal/app/command"
 
 type Application struct {
 	Queries Queries

@@ -7,8 +7,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/eduaravila/momo/apps/auth/internal/oauth/adapter"
-	"github.com/eduaravila/momo/apps/auth/internal/oauth/app"
+	"github.com/eduaravila/momo/apps/auth/internal/adapter"
+	"github.com/eduaravila/momo/apps/auth/internal/app"
 	"github.com/eduaravila/momo/apps/auth/internal/oauth/storage"
 	"github.com/eduaravila/momo/packages/postgres/queries"
 	"github.com/eduaravila/momo/packages/router"
@@ -96,6 +96,8 @@ func TwitchLogIn(q *queries.Queries, twitchAPI *adapter.TwitchAPI) HTTPWithError
 
 func Handler(q *queries.Queries, twitchAPI *adapter.TwitchAPI) http.Handler {
 	router := router.NewHandler(http.NewServeMux())
+	m := http.NewServeMux()
+
 	router.Get("/oauth/twitch/callback", withRequestID(withError(TwitchLogIn(q, twitchAPI))))
 
 	return withCors(router.GetServeMux())
