@@ -15,5 +15,4 @@ func RunHTTPServer(
 	if err := http.ListenAndServe(addrs, rootRouter); err != nil {
 		log.Fatal(err)
 	}
-
 }

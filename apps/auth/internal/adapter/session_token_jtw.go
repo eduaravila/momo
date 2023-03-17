@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/eduaravila/momo/apps/auth/internal/oauth/domain/session"
+	"github.com/eduaravila/momo/apps/auth/internal/domain/session"
 
 	jwt "github.com/golang-jwt/jwt/v4"
 )
