@@ -9,7 +9,7 @@ import (
 
 	"github.com/eduaravila/momo/apps/auth/internal/adapter"
 	"github.com/eduaravila/momo/apps/auth/internal/app"
-	"github.com/eduaravila/momo/apps/auth/internal/oauth/storage"
+	"github.com/eduaravila/momo/apps/auth/internal/storage"
 	"github.com/eduaravila/momo/packages/postgres/queries"
 	"github.com/eduaravila/momo/packages/router"
 	"github.com/google/uuid"
@@ -69,7 +69,7 @@ func withError(fn HTTPWithError) http.Handler {
 
 func TwitchLogIn(q *queries.Queries, twitchAPI *adapter.TwitchAPI) HTTPWithError {
 	return func(w http.ResponseWriter, r *http.Request) error {
-		s := oidc.NewAuthService(storage.NewStorage(r.Context(), q), adapter.NewTwitchAPI())
+		s := oidc.NewAuthService(storage.NewSessionPostgresStorage(r.Context(), q), adapter.NewTwitchAPI())
 
 		queryparams := r.URL.Query()
 		code := queryparams.Get("code")

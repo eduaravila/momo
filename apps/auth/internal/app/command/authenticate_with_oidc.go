@@ -27,14 +27,16 @@ type authenticateWithOIDCHandler struct {
 	store        session.Storage
 }
 
-type AuthenticateWithOIDCHandler decorators.CommandHandler[authenticateWithOIDCHandler]
+type AuthenticateWithOIDCHandler decorators.CommandHandler[GenerateSession]
 
 func NewAuthenticateWithOIDCHandler(
 	oAuthRepository OAuthService,
+	tokenService TokenService,
 	store session.Storage,
 ) decorators.CommandHandler[GenerateSession] {
 	return &authenticateWithOIDCHandler{
 		oAuthService: oAuthRepository,
+		tokenService: tokenService,
 		store:        store,
 	}
 }

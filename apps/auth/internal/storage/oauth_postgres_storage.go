@@ -19,7 +19,7 @@ type OauthPostgresStorage struct {
 	queries *queries.Queries
 }
 
-func NewStorage(queries *queries.Queries) *OauthPostgresStorage {
+func NewSessionPostgresStorage(queries *queries.Queries) *OauthPostgresStorage {
 	return &OauthPostgresStorage{queries}
 }
 
@@ -107,4 +107,40 @@ func (o *OauthPostgresStorage) AddAccountWithUser(
 	}
 
 	return nil
+}
+
+func (o *OauthPostgresStorage) AddSession(ctx context.Context, session *session.Session) error {
+	id, err := uuid.FromBytes([]byte(session.ID))
+	if err != nil {
+		return err
+	}
+
+	userId, err := uuid.FromBytes([]byte(session.UserID))
+
+	if err != nil {
+		return err
+	}
+
+	_, err = o.queries.CreateSession(ctx, queries.CreateSessionParams{
+		ID:           id,
+		UserID:       userId,
+		CreatedAt:    time.Now(),
+		ExpiredAt:    session.ExpiredAt,
+		IpAddress:    session.Metadata.IPAddress,
+		UserAgent:    session.Metadata.UserAgent,
+		IsValid:      session.IsValid,
+		SessionToken: session.SessionToken.Raw,
+	})
+
+	return err
+}
+
+func (o *OauthPostgresStorage) FindUserFromSub(ctx context.Context, sub string) (*session.User, error) {
+
+	dbUser, err := o.queries.GetUserBySub(ctx, sub)
+	if err != nil {
+		return nil, err
+	}
+
+	return session.UnmarshalUserFromDatabase(dbUser.ID.String(), dbUser.CreatedAt, dbUser.UpdatedAt)
 }

@@ -9,7 +9,7 @@ type Session struct {
 	UserID       string
 	ExpiredAt    time.Time
 	SessionToken *Token
-	metadata     *ClientMetadata
+	Metadata     *ClientMetadata
 	IsValid      bool
 }
 
@@ -37,6 +37,6 @@ func NewSession(
 		ExpiredAt:    expiredAt,
 		SessionToken: sessionToken,
 		IsValid:      sessionToken.Valid,
-		metadata:     NewSessionMetadata(userAgent, ipAddress),
+		Metadata:     NewSessionMetadata(userAgent, ipAddress),
 	}
 }
