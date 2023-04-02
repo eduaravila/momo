@@ -33,7 +33,7 @@ func NewAuthenticateWithOIDCHandler(
 	oAuthRepository OAuthService,
 	tokenService TokenService,
 	store session.Storage,
-) decorators.CommandHandler[GenerateSession] {
+) AuthenticateWithOIDCHandler {
 	return &authenticateWithOIDCHandler{
 		oAuthService: oAuthRepository,
 		tokenService: tokenService,
