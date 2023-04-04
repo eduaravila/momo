@@ -61,7 +61,7 @@ func (g *authenticateWithOIDCHandler) Handle(
 		return err
 	}
 
-	session := session.NewSession(
+	session, err := session.NewSession(
 		cmd.SessionUUID,
 		cmd.UserUUID,
 		token.Claims.ExpiresAt,
@@ -69,6 +69,10 @@ func (g *authenticateWithOIDCHandler) Handle(
 		cmd.Metadata.UserAgent,
 		cmd.Metadata.IPAddress,
 	)
+
+	if err != nil {
+		return err
+	}
 
 	return g.store.AddSession(ctx, session)
 }

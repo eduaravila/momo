@@ -1,11 +1,14 @@
 package session
 
-import "time"
+import (
+	"errors"
+	"time"
+)
 
 type Token struct {
 	Raw    string
 	Valid  bool
-	Claims Claims
+	Claims *Claims
 }
 
 type Claims struct {
@@ -32,16 +35,31 @@ type Claims struct {
 	ID string
 }
 
-func NewSessionToken(raw string, valid bool, claims Claims) Token {
-	return Token{
+func NewSessionToken(raw string, valid bool, claims *Claims) (*Token, error) {
+	if raw == "" {
+		return nil, errors.New("raw is empty")
+	}
+
+	if claims == nil {
+		return nil, errors.New("claims is empty")
+	}
+
+	return &Token{
 		Raw:    raw,
 		Valid:  valid,
 		Claims: claims,
-	}
+	}, nil
 }
 
-func NewClaims(issuer string, subject string, audience []string, expiresAt time.Time, notBefore time.Time, issuedAt time.Time, id string) Claims {
-	return Claims{
+func NewClaims(
+	issuer string,
+	subject string,
+	audience []string,
+	expiresAt time.Time,
+	notBefore time.Time,
+	issuedAt time.Time,
+	id string) *Claims {
+	return &Claims{
 		Issuer:    issuer,
 		Subject:   subject,
 		Audience:  audience,

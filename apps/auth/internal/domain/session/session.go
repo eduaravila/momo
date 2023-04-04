@@ -1,6 +1,7 @@
 package session
 
 import (
+	"errors"
 	"time"
 )
 
@@ -30,7 +31,23 @@ func NewSession(
 	sessionToken *Token,
 	userAgent string,
 	ipAddress string,
-) *Session {
+) (*Session, error) {
+	if id == "" {
+		return nil, errors.New("id is empty")
+	}
+
+	if userUUID == "" {
+		return nil, errors.New("userUUID is empty")
+	}
+
+	if expiredAt.IsZero() {
+		return nil, errors.New("expiredAt is empty")
+	}
+
+	if sessionToken == nil {
+		return nil, errors.New("sessionToken is empty")
+	}
+
 	return &Session{
 		ID:           id,
 		UserID:       userUUID,
@@ -38,5 +55,25 @@ func NewSession(
 		SessionToken: sessionToken,
 		IsValid:      sessionToken.Valid,
 		Metadata:     NewSessionMetadata(userAgent, ipAddress),
-	}
+	}, nil
+}
+
+func UnmarshalSessionFromDb(
+	id string,
+	userUUID string,
+	createdAt time.Time,
+	expiredAt time.Time,
+	ipAddress string,
+	userAgent string,
+	isValid bool,
+	sessionToken *Token,
+) (*Session, error) {
+	return NewSession(
+		id,
+		userUUID,
+		expiredAt,
+		sessionToken,
+		userAgent,
+		ipAddress,
+	)
 }

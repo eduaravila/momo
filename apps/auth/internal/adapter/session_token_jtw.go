@@ -43,7 +43,7 @@ func (s *SessionToken) CreateSessionToken(ctx context.Context, subject string) (
 		return nil, errors.Join(err, errors.New("failed creating session token"))
 	}
 
-	sessionToken := session.NewSessionToken(signedToken, true,
+	return session.NewSessionToken(signedToken, true,
 		session.NewClaims(
 			claims.Issuer,
 			claims.Subject,
@@ -52,8 +52,6 @@ func (s *SessionToken) CreateSessionToken(ctx context.Context, subject string) (
 			claims.NotBefore.Time,
 			claims.IssuedAt.Time,
 			claims.ID))
-
-	return &sessionToken, nil
 }
 
 func NewJWTToken(claims jwt.RegisteredClaims) *JWTToken {
@@ -82,4 +80,31 @@ func (t *JWTToken) Verify(tokenString string) error {
 	})
 
 	return err
+}
+
+func NewTokenFromString(tokenString string) (*session.Token, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte(os.Getenv("JWT_PUBLIC_KEY")), nil
+	})
+
+	if err != nil {
+		return nil, errors.Join(err, errors.New("failed parsing token"))
+	}
+
+	claims, ok := token.Claims.(*jwt.RegisteredClaims)
+
+	if !ok {
+		return nil, errors.New("failed parsing token")
+	}
+
+	return session.NewSessionToken(tokenString, token.Valid, session.NewClaims(
+		claims.Issuer,
+		claims.Subject,
+		claims.Audience,
+		claims.ExpiresAt.Time,
+		claims.NotBefore.Time,
+		claims.IssuedAt.Time,
+		claims.ID,
+	))
+
 }

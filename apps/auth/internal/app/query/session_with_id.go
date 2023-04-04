@@ -1,17 +1,26 @@
 package query
 
-import "github.com/eduaravila/momo/apps/auth/internal/domain/session"
+import (
+	"context"
 
-type SessionWithId struct {
-	SessionId string
+	"github.com/eduaravila/momo/apps/auth/internal/domain/session"
+	"github.com/eduaravila/momo/packages/decorators"
+)
+
+type SessionWithID struct {
+	SessionID string
 }
 
-type sessionWithIdHandler struct {
+type sessionWithIDHandler struct {
 	store session.Storage
 }
 
-type SessionWithIdHandler decorators.QueryHandler[SessionWithId]
+type SessionWithIDHandler decorators.QueryHandler[SessionWithID, *session.Session]
 
-func NewSessionWithIdHandler(store session.Storage) SessionWithIdHandler {
+func NewSessionWithIDHandler(store session.Storage) SessionWithIDHandler {
+	return &sessionWithIDHandler{store}
+}
 
+func (s *sessionWithIDHandler) Handle(cxt context.Context, query SessionWithID) (*session.Session, error) {
+	return s.store.GetSession(cxt, query.SessionID)
 }

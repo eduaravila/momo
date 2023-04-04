@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/eduaravila/momo/apps/auth/internal/adapter"
 	"github.com/eduaravila/momo/apps/auth/internal/domain/session"
 	"github.com/eduaravila/momo/packages/postgres/queries"
 	"github.com/google/uuid"
@@ -143,4 +144,34 @@ func (o *OauthPostgresStorage) FindUserFromSub(ctx context.Context, sub string) 
 	}
 
 	return session.UnmarshalUserFromDatabase(dbUser.ID.String(), dbUser.CreatedAt, dbUser.UpdatedAt)
+}
+
+func (o *OauthPostgresStorage) GetSession(cxt context.Context, sessionId string) (*session.Session, error) {
+	sessionIdString, err := uuid.ParseBytes([]byte(sessionId))
+
+	if err != nil {
+		return nil, err
+	}
+
+	sessionDb, err := o.queries.GetSession(cxt, sessionIdString)
+	if err != nil {
+		return nil, errors.Join(err, errors.New("error getting session from db"))
+	}
+
+	sessionToken, err := adapter.NewTokenFromString(sessionDb.SessionToken)
+
+	if err != nil {
+		return nil, errors.Join(err, errors.New("error getting session from db"))
+	}
+
+	return session.UnmarshalSessionFromDb(
+		sessionDb.ID.String(),
+		sessionDb.UserID.String(),
+		sessionDb.CreatedAt,
+		sessionDb.ExpiredAt,
+		sessionDb.IpAddress,
+		sessionDb.UserAgent,
+		sessionDb.IsValid,
+		sessionToken,
+	)
 }
