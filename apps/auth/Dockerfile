@@ -5,13 +5,13 @@ LABEL maintainer="EduardoAvila <me@eduaravila.com>"
 COPY go.* /github.com/eduaravila/momo/
 COPY packages/router /github.com/eduaravila/momo/packages/router
 COPY packages/postgres /github.com/eduaravila/momo/packages/postgres
+COPY packages/server /github.com/eduaravila/momo/packages/server
 
 COPY apps/auth /github.com/eduaravila/momo/apps/auth
 
-RUN go mod download
-
 WORKDIR /github.com/eduaravila/momo/apps/auth
 
+RUN go mod download
 
 # DEBUG MODE
 FROM base as debug
