@@ -1,6 +1,9 @@
 package app
 
-import "github.com/eduaravila/momo/apps/auth/internal/app/command"
+import (
+	"github.com/eduaravila/momo/apps/auth/internal/app/command"
+	"github.com/eduaravila/momo/apps/auth/internal/app/query"
+)
 
 type Application struct {
 	Queries  Queries
@@ -12,4 +15,5 @@ type Commands struct {
 }
 
 type Queries struct {
+	SessionWithID query.SessionWithIDHandler
 }

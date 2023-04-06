@@ -24,10 +24,12 @@ func RunHTTPServer(
 
 type HTTPWithError func(w http.ResponseWriter, r *http.Request) error
 
+type ContextKey string
+
 func withRequestID(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requestID := r.Header.Get("X-Request-Id")
-		r = r.WithContext(context.WithValue(r.Context(), requestIDKey("requestId"), requestID))
+		r = r.WithContext(context.WithValue(r.Context(), ContextKey("requestId"), requestID))
 		os.Getenv("HOSTNAME")
 		if requestID == "" {
 			requestID = uuid.New().String()
