@@ -59,8 +59,7 @@ func (q *Queries) CountAccounts(ctx context.Context) (int64, error) {
 const createAccount = `-- name: CreateAccount :one
 INSERT INTO 
 accounts (id, user_id, picture, email, prefered_username, access_token, refresh_token, iss, sub, created_at, updated_at, expired_at, scope) 
-VALUES 
-($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) 
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) 
 ON CONFLICT (sub) DO UPDATE 
 SET user_id = EXCLUDED.user_id, 
 picture = EXCLUDED.picture, 
@@ -73,7 +72,7 @@ sub = EXCLUDED.sub,
 expired_at = EXCLUDED.expired_at,
 scope = EXCLUDED.scope,
 updated_at = now()
- RETURNING id, user_id, picture, email, prefered_username, access_token, refresh_token, iss, sub, created_at, updated_at, expired_at, scope
+RETURNING id, user_id, picture, email, prefered_username, access_token, refresh_token, iss, sub, created_at, updated_at, expired_at, scope
 `
 
 type CreateAccountParams struct {

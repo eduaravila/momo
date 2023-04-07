@@ -30,9 +30,6 @@ type Claims struct {
 
 	// the `iat` (Issued At) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.6
 	IssuedAt time.Time
-
-	// the `jti` (JWT ID) claim. See https://datatracker.ietf.org/doc/html/rfc7519#section-4.1.7
-	ID string
 }
 
 func NewSessionToken(raw string, valid bool, claims *Claims) (*Token, error) {
@@ -54,18 +51,14 @@ func NewSessionToken(raw string, valid bool, claims *Claims) (*Token, error) {
 func NewClaims(
 	issuer string,
 	subject string,
-	audience []string,
 	expiresAt time.Time,
 	notBefore time.Time,
-	issuedAt time.Time,
-	id string) *Claims {
+	issuedAt time.Time) *Claims {
 	return &Claims{
 		Issuer:    issuer,
 		Subject:   subject,
-		Audience:  audience,
 		ExpiresAt: expiresAt,
 		NotBefore: notBefore,
 		IssuedAt:  issuedAt,
-		ID:        id,
 	}
 }

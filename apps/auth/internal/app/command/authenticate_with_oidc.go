@@ -46,11 +46,12 @@ func (g *authenticateWithOIDCHandler) Handle(
 	cmd GenerateSession,
 ) error {
 	account, err := g.oAuthService.GetAccount(ctx, cmd.Code, cmd.AccountUUID, cmd.UserUUID)
+
 	if err != nil {
 		return errors.Join(err, errors.New("failed to get token"))
 	}
 
-	err = g.store.AddAccountWithUser(ctx, account, cmd.UserUUID)
+	err = g.store.AddAccountWithUser(ctx, account)
 	if err != nil {
 		return errors.Join(err, errors.New("failed to add account"))
 	}
@@ -63,7 +64,7 @@ func (g *authenticateWithOIDCHandler) Handle(
 
 	session, err := session.NewSession(
 		cmd.SessionUUID,
-		cmd.UserUUID,
+		account.UserID,
 		token.Claims.ExpiresAt,
 		token,
 		cmd.Metadata.UserAgent,

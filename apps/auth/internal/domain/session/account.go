@@ -103,3 +103,7 @@ func NewAccountFromOIDC(
 		token.Scope,
 	)
 }
+
+func (a *Account) SetUserId(id string) {
+	a.UserID = id
+}

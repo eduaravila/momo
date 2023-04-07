@@ -4,6 +4,7 @@ import (
 	"github.com/eduaravila/momo/apps/auth/internal/adapter"
 	"github.com/eduaravila/momo/apps/auth/internal/app"
 	"github.com/eduaravila/momo/apps/auth/internal/app/command"
+	"github.com/eduaravila/momo/apps/auth/internal/app/query"
 	"github.com/eduaravila/momo/apps/auth/internal/storage"
 	"github.com/eduaravila/momo/packages/postgres/queries"
 )
@@ -28,7 +29,9 @@ func newApplication(
 	sessionStorage := storage.NewSessionPostgresStorage(queries)
 
 	return app.Application{
-		Queries: app.Queries{},
+		Queries: app.Queries{
+			SessionWithID: query.NewSessionWithIDHandler(sessionStorage),
+		},
 		Commands: app.Commands{
 			AuthenticateWithOIDC: command.NewAuthenticateWithOIDCHandler(oAuthService, tokenService, sessionStorage),
 		},

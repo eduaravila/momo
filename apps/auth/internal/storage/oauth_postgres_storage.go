@@ -42,8 +42,8 @@ func InitPostgresDB() (*sql.DB, error) {
 	return db, db.Ping()
 }
 
-func (s OauthPostgresStorage) CreateSession(ctx context.Context, session queries.Session) (queries.Session, error) {
-	return s.queries.CreateSession(ctx, queries.CreateSessionParams{
+func (o OauthPostgresStorage) CreateSession(ctx context.Context, session queries.Session) (queries.Session, error) {
+	return o.queries.CreateSession(ctx, queries.CreateSessionParams{
 		ID:           uuid.New(),
 		ExpiredAt:    session.ExpiredAt,
 		UserAgent:    session.UserAgent,
@@ -53,28 +53,33 @@ func (s OauthPostgresStorage) CreateSession(ctx context.Context, session queries
 	})
 }
 
-func (s OauthPostgresStorage) CreateUser(ctx context.Context) (queries.User, error) {
-	return s.queries.CreateUser(ctx,
+func (o OauthPostgresStorage) CreateUser(ctx context.Context) (queries.User, error) {
+	return o.queries.CreateUser(ctx,
 		uuid.New(),
 	)
 }
 
-func (o OauthPostgresStorage) GetAccountAndUserBySub(ctx context.Context, sub string) (queries.GetAccountAndUserBySubRow, error) {
+func (o OauthPostgresStorage) GetAccountAndUserBySub(
+	ctx context.Context,
+	sub string) (queries.GetAccountAndUserBySubRow, error) {
 	return o.queries.GetAccountAndUserBySub(ctx, sub)
 }
 
-func (o *OauthPostgresStorage) AddAccountWithUser(
+func (o OauthPostgresStorage) AddAccountWithUser(
 	ctx context.Context,
 	account *session.Account,
-	userUUID string,
 ) error {
-	_, err := o.queries.GetAccountAndUserBySub(ctx, account.Sub)
+	user, err := o.queries.GetAccountAndUserBySub(ctx, account.Sub)
 	if err != nil && err != sql.ErrNoRows {
 		return err
 	}
 
+	userUUID := user.UserID
+
 	if err == sql.ErrNoRows {
-		id, err := uuid.FromBytes([]byte(userUUID))
+		id, err := uuid.Parse(account.UserID)
+		userUUID = id
+
 		if err != nil {
 			return errors.Join(err, errors.New("error parsing user id"))
 		}
@@ -85,11 +90,13 @@ func (o *OauthPostgresStorage) AddAccountWithUser(
 		}
 	}
 
-	parsedAccountUUID, _ := uuid.FromBytes([]byte(account.ID))
-	parsedUserUUID, _ := uuid.FromBytes([]byte(account.ID))
+	account.SetUserId(userUUID.String())
+
+	parsedAccountUUID, _ := uuid.Parse(account.ID)
+
 	_, err = o.queries.CreateAccount(ctx, queries.CreateAccountParams{
 		ID:               parsedAccountUUID,
-		UserID:           parsedUserUUID,
+		UserID:           userUUID,
 		Sub:              account.Sub,
 		Email:            account.Email,
 		PreferedUsername: account.PreferedUsername,
@@ -111,13 +118,12 @@ func (o *OauthPostgresStorage) AddAccountWithUser(
 }
 
 func (o *OauthPostgresStorage) AddSession(ctx context.Context, session *session.Session) error {
-	id, err := uuid.FromBytes([]byte(session.ID))
+	id, err := uuid.Parse(session.ID)
 	if err != nil {
 		return err
 	}
 
-	userId, err := uuid.FromBytes([]byte(session.UserID))
-
+	userId, err := uuid.Parse(session.UserID)
 	if err != nil {
 		return err
 	}
@@ -146,14 +152,14 @@ func (o *OauthPostgresStorage) FindUserFromSub(ctx context.Context, sub string) 
 	return session.UnmarshalUserFromDatabase(dbUser.ID.String(), dbUser.CreatedAt, dbUser.UpdatedAt)
 }
 
-func (o *OauthPostgresStorage) GetSession(cxt context.Context, sessionId string) (*session.Session, error) {
-	sessionIdString, err := uuid.ParseBytes([]byte(sessionId))
+func (o *OauthPostgresStorage) GetSession(cxt context.Context, sessionIdString string) (*session.Session, error) {
+	sessionID, err := uuid.Parse(sessionIdString)
 
 	if err != nil {
 		return nil, err
 	}
 
-	sessionDb, err := o.queries.GetSession(cxt, sessionIdString)
+	sessionDb, err := o.queries.GetSession(cxt, sessionID)
 	if err != nil {
 		return nil, errors.Join(err, errors.New("error getting session from db"))
 	}
@@ -161,7 +167,7 @@ func (o *OauthPostgresStorage) GetSession(cxt context.Context, sessionId string)
 	sessionToken, err := adapter.NewTokenFromString(sessionDb.SessionToken)
 
 	if err != nil {
-		return nil, errors.Join(err, errors.New("error getting session from db"))
+		return nil, errors.Join(err, errors.New("error getting session from db"), errors.New("cannot convert string token"))
 	}
 
 	return session.UnmarshalSessionFromDb(

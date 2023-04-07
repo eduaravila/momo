@@ -23,10 +23,11 @@ func DefaultClaimsForSessionInclude(id string) jwt.RegisteredClaims {
 	exp := time.Now().Add(1 * time.Hour)
 
 	return jwt.RegisteredClaims{
-		Subject: id,
-
+		Subject:   id,
 		ExpiresAt: jwt.NewNumericDate(exp),
 		IssuedAt:  jwt.NewNumericDate(time.Now()),
+		NotBefore: jwt.NewNumericDate(time.Now()),
+		Issuer:    os.Getenv("JWT_ISSUER"),
 	}
 }
 
@@ -47,11 +48,9 @@ func (s *SessionToken) CreateSessionToken(ctx context.Context, subject string) (
 		session.NewClaims(
 			claims.Issuer,
 			claims.Subject,
-			claims.Audience,
 			claims.ExpiresAt.Time,
 			claims.NotBefore.Time,
-			claims.IssuedAt.Time,
-			claims.ID))
+			claims.IssuedAt.Time))
 }
 
 func NewJWTToken(claims jwt.RegisteredClaims) *JWTToken {
@@ -83,8 +82,13 @@ func (t *JWTToken) Verify(tokenString string) error {
 }
 
 func NewTokenFromString(tokenString string) (*session.Token, error) {
+	decodedPublicKey, err := jwt.ParseECPublicKeyFromPEM([]byte(os.Getenv("JWT_PUBLIC_KEY")))
+	if err != nil {
+		return nil, err
+	}
+
 	token, err := jwt.ParseWithClaims(tokenString, &jwt.RegisteredClaims{}, func(token *jwt.Token) (interface{}, error) {
-		return []byte(os.Getenv("JWT_PUBLIC_KEY")), nil
+		return decodedPublicKey, nil
 	})
 
 	if err != nil {
@@ -100,11 +104,9 @@ func NewTokenFromString(tokenString string) (*session.Token, error) {
 	return session.NewSessionToken(tokenString, token.Valid, session.NewClaims(
 		claims.Issuer,
 		claims.Subject,
-		claims.Audience,
 		claims.ExpiresAt.Time,
 		claims.NotBefore.Time,
 		claims.IssuedAt.Time,
-		claims.ID,
 	))
 
 }

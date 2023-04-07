@@ -12,7 +12,6 @@ services:
     command: sh -c "air -c .air.toml"
     environment:
       - ENV=development
-      - DB_HOST=postgres
     env_file:
       - .env.development
     volumes:
@@ -21,9 +20,11 @@ services:
       - "8080:8080"
       - "4000:4000"
     restart: always
+    networks:
+      - postgres_auth
     depends_on:
-      - postgres
-  postgres:
+      - postgres_auth
+  postgres_auth:
     container_name: postgres_auth
     image: postgres:15.1-alpine
     ports:
@@ -45,7 +46,7 @@ services:
 
 networks:
   postgres_auth:
-    name: postgres
+    name: postgres_auth_network
     driver: bridge
 volumes:
   postgresdata:

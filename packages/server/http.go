@@ -15,7 +15,7 @@ func RunHTTPServer(
 	addrs string,
 	createHandler func() http.Handler) {
 	rootRouter := http.NewServeMux()
-	rootRouter.Handle(prefix, createHandler())
+	rootRouter.Handle(prefix+"/", http.StripPrefix(prefix, createHandler()))
 
 	if err := http.ListenAndServe(addrs, rootRouter); err != nil {
 		log.Fatal(err)
