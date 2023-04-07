@@ -1,5 +1,5 @@
 {
-    "name": "@momo/listener",
+    "name": "@momo/auth",
     "scripts": {
         "dev": "npm run dev:watch",
         "dev:watch": "air  -c .air.toml",

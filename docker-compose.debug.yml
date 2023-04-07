@@ -13,7 +13,7 @@ services:
       - ENV=development
       - DB_HOST=postgres 
     env_file:
-      - .env.development.local
+      - .env.development
     volumes:
       - ./apps/auth:/github.com/eduaravila/momo/apps/auth
     ports:
