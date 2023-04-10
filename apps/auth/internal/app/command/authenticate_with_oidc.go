@@ -6,6 +6,7 @@ import (
 
 	"github.com/eduaravila/momo/apps/auth/internal/domain/session"
 	"github.com/eduaravila/momo/packages/decorators"
+	"golang.org/x/exp/slog"
 )
 
 /*
@@ -33,12 +34,18 @@ func NewAuthenticateWithOIDCHandler(
 	oAuthRepository OAuthService,
 	tokenService TokenService,
 	store session.Storage,
+	logger *slog.Logger,
+	metrics decorators.MetricsClient,
 ) AuthenticateWithOIDCHandler {
-	return &authenticateWithOIDCHandler{
-		oAuthService: oAuthRepository,
-		tokenService: tokenService,
-		store:        store,
-	}
+	return decorators.ApplyCommandDecorators[GenerateSession](
+		&authenticateWithOIDCHandler{
+			oAuthService: oAuthRepository,
+			tokenService: tokenService,
+			store:        store,
+		},
+		logger,
+		metrics,
+	)
 }
 
 func (g *authenticateWithOIDCHandler) Handle(

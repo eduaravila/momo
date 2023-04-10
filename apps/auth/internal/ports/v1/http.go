@@ -5,6 +5,8 @@ import (
 	"os"
 	"strings"
 
+	"golang.org/x/exp/slog"
+
 	"github.com/eduaravila/momo/apps/auth/internal/app"
 	"github.com/eduaravila/momo/apps/auth/internal/app/command"
 	"github.com/eduaravila/momo/apps/auth/internal/app/query"
@@ -48,17 +50,18 @@ func (h HTTPServer) OauthTwitchCallback(
 	session, err := h.app.Queries.SessionWithID.Handle(r.Context(), query.SessionWithID{SessionID: sessionUUID})
 
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		slog.Error("could not create session", slog.String("error", err.Error()))
 	}
 
-	http.SetCookie(w, &http.Cookie{
-		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
-		Name:     "session",
-		Value:    session.SessionToken.Raw,
-		Path:     "/",
-	})
+	if err == nil {
+		http.SetCookie(w, &http.Cookie{
+			HttpOnly: true,
+			SameSite: http.SameSiteLaxMode,
+			Name:     "session",
+			Value:    session.SessionToken.Raw,
+			Path:     "/",
+		})
+	}
 
 	http.Redirect(w, r, os.Getenv("DASHBOARD_APP_URL"), http.StatusFound)
 

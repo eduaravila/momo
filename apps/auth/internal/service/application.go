@@ -1,12 +1,16 @@
 package service
 
 import (
+	"os"
+
 	"github.com/eduaravila/momo/apps/auth/internal/adapter"
 	"github.com/eduaravila/momo/apps/auth/internal/app"
 	"github.com/eduaravila/momo/apps/auth/internal/app/command"
 	"github.com/eduaravila/momo/apps/auth/internal/app/query"
 	"github.com/eduaravila/momo/apps/auth/internal/storage"
+	"github.com/eduaravila/momo/packages/metrics"
 	"github.com/eduaravila/momo/packages/postgres/queries"
+	"golang.org/x/exp/slog"
 )
 
 func NewApplication() app.Application {
@@ -27,13 +31,14 @@ func newApplication(
 	}
 	queries := queries.New(postgreDB)
 	sessionStorage := storage.NewSessionPostgresStorage(queries)
-
+	logger := slog.New(slog.NewTextHandler(os.Stdin))
+	metricsClient := metrics.NoOpt{}
 	return app.Application{
 		Queries: app.Queries{
 			SessionWithID: query.NewSessionWithIDHandler(sessionStorage),
 		},
 		Commands: app.Commands{
-			AuthenticateWithOIDC: command.NewAuthenticateWithOIDCHandler(oAuthService, tokenService, sessionStorage),
+			AuthenticateWithOIDC: command.NewAuthenticateWithOIDCHandler(oAuthService, tokenService, sessionStorage, logger, metricsClient),
 		},
 	}
 }

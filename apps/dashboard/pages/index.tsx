@@ -4,7 +4,7 @@ import Link from "next/link";
 
 
 export const getServerSideProps = async ()=> {
-  console.log(process.env.NEXT_PUBLIC_AUTH_SERVER_API_URL);
+  console.log(process.env);
 
   return {
     props: {}
