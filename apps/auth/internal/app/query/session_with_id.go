@@ -21,6 +21,9 @@ func NewSessionWithIDHandler(store session.Storage) SessionWithIDHandler {
 	return &sessionWithIDHandler{store}
 }
 
-func (s *sessionWithIDHandler) Handle(cxt context.Context, query SessionWithID) (*session.Session, error) {
+func (s *sessionWithIDHandler) Handle(
+	cxt context.Context,
+	query SessionWithID,
+) (*session.Session, error) {
 	return s.store.GetSession(cxt, query.SessionID)
 }

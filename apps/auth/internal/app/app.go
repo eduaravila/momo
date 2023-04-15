@@ -15,5 +15,6 @@ type Commands struct {
 }
 
 type Queries struct {
-	SessionWithID query.SessionWithIDHandler
+	SessionWithID      query.SessionWithIDHandler
+	VerifySessionToken query.SessionTokenVerifierHandlers
 }

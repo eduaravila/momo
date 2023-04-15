@@ -19,7 +19,8 @@ type CommandHandler[C any] interface {
 func ApplyCommandDecorators[C any](
 	handler CommandHandler[C],
 	logger *slog.Logger,
-	metricsClient MetricsClient) CommandHandler[C] {
+	metricsClient MetricsClient,
+) CommandHandler[C] {
 	return CommandLoggingDecorator[C]{
 		base: CommandMetricsDecorator[C]{
 			base:   handler,
@@ -29,6 +30,6 @@ func ApplyCommandDecorators[C any](
 	}
 }
 
-func getCommandName[C any](command C) string {
+func generateActionName[C any](command C) string {
 	return strings.Split(fmt.Sprintf("%T", command), ".")[1]
 }

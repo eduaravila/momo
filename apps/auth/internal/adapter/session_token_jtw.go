@@ -68,17 +68,30 @@ func (t *JWTToken) Sign() (string, error) {
 	return t.token.SignedString(decodedKey)
 }
 
-func (t *JWTToken) Verify(tokenString string) error {
+func (t *SessionToken) VerifyToken(ctx context.Context, tokenString string) (*session.Token, error) {
 	decodedKey, err := jwt.ParseECPublicKeyFromPEM([]byte(os.Getenv("JWT_PUBLIC_KEY")))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	_, err = jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+	parsedToken, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		return decodedKey, nil
 	})
 
-	return err
+	if err != nil {
+		return nil, errors.Join(err, errors.New("failed parsing token"))
+	}
+	claims := parsedToken.Claims.(jwt.RegisteredClaims)
+	claims.Valid()
+	return &session.Token{
+		Valid: parsedToken.Valid,
+		Claims: session.NewClaims(
+			claims.Issuer,
+			claims.Subject,
+			claims.ExpiresAt.Time,
+			claims.NotBefore.Time,
+			claims.IssuedAt.Time,
+		)}, nil
 }
 
 func NewTokenFromString(tokenString string) (*session.Token, error) {

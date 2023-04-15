@@ -16,29 +16,45 @@ import (
 func NewApplication() app.Application {
 
 	tokenService := adapter.NewJwtTokenCreator()
+
 	oAuthService := adapter.NewTwitchAPI()
 
-	return newApplication(oAuthService, tokenService)
+	return newApplication(oAuthService, tokenService, tokenService)
 }
 
 func newApplication(
 	oAuthService command.OAuthService,
 	tokenService command.TokenService,
+	tokenVerifierService query.TokenVeriferService,
 ) app.Application {
 	postgreDB, err := storage.InitPostgresDB()
 	if err != nil {
 		panic(err)
 	}
+
 	queries := queries.New(postgreDB)
+
 	sessionStorage := storage.NewSessionPostgresStorage(queries)
 	logger := slog.New(slog.NewTextHandler(os.Stdin))
 	metricsClient := metrics.NoOpt{}
+
 	return app.Application{
 		Queries: app.Queries{
 			SessionWithID: query.NewSessionWithIDHandler(sessionStorage),
+			VerifySessionToken: query.NewSessionTokenVerifierHandler(
+				tokenVerifierService,
+				logger,
+				metricsClient,
+			),
 		},
 		Commands: app.Commands{
-			AuthenticateWithOIDC: command.NewAuthenticateWithOIDCHandler(oAuthService, tokenService, sessionStorage, logger, metricsClient),
+			AuthenticateWithOIDC: command.NewAuthenticateWithOIDCHandler(
+				oAuthService,
+				tokenService,
+				sessionStorage,
+				logger,
+				metricsClient,
+			),
 		},
 	}
 }

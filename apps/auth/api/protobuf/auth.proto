@@ -3,7 +3,7 @@ syntax = "proto3";
 package auth;
 
 option go_package = "github.com/eduaravila/momo/packages/genproto/auth";
-
+import "google/protobuf/timestamp.proto";
 
 service SessionService {
     rpc IsValidSession(IsValidSessionTokenRequest) returns (IsValidSessionTokenResponse);
@@ -17,4 +17,12 @@ message IsValidSessionTokenRequest {
 
 message IsValidSessionTokenResponse {
     bool valid = 1;
+    message Claims {
+        string issuer = 1;
+        string subject = 2;
+        string audience = 3;
+        google.protobuf.Timestamp expiresAt = 4;
+        google.protobuf.Timestamp issuedAt = 5;
+    }
+    Claims claims = 2;
 }
