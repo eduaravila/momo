@@ -65,36 +65,52 @@ func (o OauthPostgresStorage) GetAccountAndUserBySub(
 	return o.queries.GetAccountAndUserBySub(ctx, sub)
 }
 
+func (o OauthPostgresStorage) GetOrCreateUserFromSub(
+	ctx context.Context,
+	userID string,
+	sub string,
+) (*session.User, error) {
+	accountAndUser, err := o.queries.GetAccountAndUserBySub(ctx, sub)
+	if err != nil && err != sql.ErrNoRows {
+		return nil, err
+	}
+
+	var user *session.User
+
+	if err == sql.ErrNoRows {
+		id, err := uuid.Parse(userID)
+
+		if err != nil {
+			return nil, errors.Join(err, errors.New("error parsing user id"))
+		}
+
+		userDb, err := o.queries.CreateUser(ctx, id)
+
+		if err != nil {
+			return nil, errors.Join(err, errors.New("error creating user"))
+		}
+
+		user, err = session.NewUser(userDb.ID.String(), userDb.CreatedAt, userDb.UpdatedAt)
+
+		if err != nil {
+			return nil, errors.Join(err, errors.New("error creating user"))
+		}
+	} else {
+		user, err = session.NewUser(accountAndUser.UserID.String(), accountAndUser.CreatedAt, accountAndUser.UpdatedAt)
+	}
+
+	return user, err
+}
+
 func (o OauthPostgresStorage) AddAccountWithUser(
 	ctx context.Context,
 	account *session.Account,
+	user *session.User,
 ) error {
-	user, err := o.queries.GetAccountAndUserBySub(ctx, account.Sub)
-	if err != nil && err != sql.ErrNoRows {
-		return err
-	}
-
-	userUUID := user.UserID
-
-	if err == sql.ErrNoRows {
-		id, err := uuid.Parse(account.UserID)
-		userUUID = id
-
-		if err != nil {
-			return errors.Join(err, errors.New("error parsing user id"))
-		}
-
-		_, err = o.queries.CreateUser(ctx, id)
-		if err != nil {
-			return errors.Join(err, errors.New("error creating user"))
-		}
-	}
-
-	account.SetUserId(userUUID.String())
-
 	parsedAccountUUID, _ := uuid.Parse(account.ID)
+	userUUID, _ := uuid.Parse(user.ID)
 
-	_, err = o.queries.CreateAccount(ctx, queries.CreateAccountParams{
+	_, err := o.queries.CreateAccount(ctx, queries.CreateAccountParams{
 		ID:               parsedAccountUUID,
 		UserID:           userUUID,
 		Sub:              account.Sub,
@@ -123,14 +139,15 @@ func (o *OauthPostgresStorage) AddSession(ctx context.Context, session *session.
 		return err
 	}
 
-	userId, err := uuid.Parse(session.UserID)
+	userID, err := uuid.Parse(session.UserID)
+
 	if err != nil {
 		return err
 	}
 
 	_, err = o.queries.CreateSession(ctx, queries.CreateSessionParams{
 		ID:           id,
-		UserID:       userId,
+		UserID:       userID,
 		CreatedAt:    time.Now(),
 		ExpiredAt:    session.ExpiredAt,
 		IpAddress:    session.Metadata.IPAddress,

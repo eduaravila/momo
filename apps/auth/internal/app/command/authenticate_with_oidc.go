@@ -58,7 +58,13 @@ func (g *authenticateWithOIDCHandler) Handle(
 		return errors.Join(err, errors.New("failed to get token"))
 	}
 
-	err = g.store.AddAccountWithUser(ctx, account)
+	user, err := g.store.GetOrCreateUserFromSub(ctx, account.UserID, account.Sub)
+
+	if err != nil {
+		return errors.Join(err, errors.New("failed to get or create user"))
+	}
+
+	err = g.store.AddAccountWithUser(ctx, account, user)
 	if err != nil {
 		return errors.Join(err, errors.New("failed to add account"))
 	}
