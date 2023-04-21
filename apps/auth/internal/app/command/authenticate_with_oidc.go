@@ -69,7 +69,7 @@ func (g *authenticateWithOIDCHandler) Handle(
 		return errors.Join(err, errors.New("failed to add account"))
 	}
 
-	token, err := g.tokenService.CreateSessionToken(ctx, account.UserID)
+	token, err := g.tokenService.CreateSessionToken(ctx, user.ID)
 
 	if err != nil {
 		return err
@@ -77,7 +77,7 @@ func (g *authenticateWithOIDCHandler) Handle(
 
 	session, err := session.NewSession(
 		cmd.SessionUUID,
-		account.UserID,
+		user.ID,
 		token.Claims.ExpiresAt,
 		token,
 		cmd.Metadata.UserAgent,

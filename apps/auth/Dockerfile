@@ -8,6 +8,7 @@ COPY packages/postgres /github.com/eduaravila/momo/packages/postgres
 COPY packages/server /github.com/eduaravila/momo/packages/server
 COPY packages/decorators /github.com/eduaravila/momo/packages/decorators
 COPY packages/metrics /github.com/eduaravila/momo/packages/metrics
+COPY packages/genproto /github.com/eduaravila/momo/packages/genproto
 
 COPY apps/auth /github.com/eduaravila/momo/apps/auth
 
