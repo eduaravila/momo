@@ -1,6 +1,7 @@
 package storage_test
 
 import (
+	"context"
 	"math/rand"
 	"net"
 	"os"
@@ -10,7 +11,9 @@ import (
 	"github.com/eduaravila/momo/apps/auth/internal/domain/session"
 	"github.com/eduaravila/momo/apps/auth/internal/storage"
 	"github.com/eduaravila/momo/packages/postgres/queries"
+	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -26,8 +29,55 @@ var userAgents = []string{
 	"Opera/9.80 (Android; Opera Mini/28.0.2254/66.318; U; en) Presto/2.12.423 Version/12.16",
 }
 
-func TestGetOrCreateUserFromSubPostgres(t *testing.T) {
+func TestSessionPosgresStorage_AddSession(t *testing.T) {
+	repo := newSessionPostgresStorage(t)
 
+	t.Parallel()
+	testCases := []struct {
+		name               string
+		SessionConstructor func(t *testing.T) *session.Session
+	}{
+		{
+			name:               "standard_session",
+			SessionConstructor: newExampleSession,
+		},
+	}
+
+	for _, c := range testCases {
+		c := c
+		t.Run(c.name, func(t *testing.T) {
+			ctx := context.Background()
+			session := c.SessionConstructor(t)
+			err := repo.AddSession(ctx, session)
+			require.NoError(t, err)
+			assertPersistedSession(t, repo, session)
+		})
+	}
+}
+
+func assertPersistedSession(t *testing.T, repo session.Storage, se *session.Session) {
+	t.Helper()
+
+	ctx := context.Background()
+
+	persistedSession, err := repo.GetSession(ctx, se.ID)
+	require.NoError(t, err)
+
+	assertSession(t, se, persistedSession)
+}
+
+var cmpRoundTimeOpt = cmp.Comparer(func(x, y time.Time) bool {
+	return x.Round(time.Second).Equal(y.Round(time.Second))
+})
+
+func assertSession(t *testing.T, expected, actual *session.Session) {
+	t.Helper()
+
+	cmpOpts := cmp.Options{
+		cmpRoundTimeOpt,
+		cmp.AllowUnexported(session.Session{}),
+	}
+	assert.True(t, cmp.Equal(expected, actual, cmpOpts))
 }
 
 func newExampleClaims(userID string) *session.Claims {

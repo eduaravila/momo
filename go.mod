@@ -16,6 +16,7 @@ require (
 	github.com/deepmap/oapi-codegen v1.12.4 // indirect
 	github.com/go-chi/chi/v5 v5.0.8 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/stretchr/testify v1.8.2 // indirect
