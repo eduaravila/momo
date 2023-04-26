@@ -1,5 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
+SET TIME ZONE 'UTC';
+
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 CREATE TABLE users (

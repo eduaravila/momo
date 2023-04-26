@@ -68,7 +68,10 @@ func (t *JWTToken) Sign() (string, error) {
 	return t.token.SignedString(decodedKey)
 }
 
-func (t *SessionToken) VerifyToken(ctx context.Context, tokenString string) (*session.Token, error) {
+func (t *SessionToken) VerifyToken(
+	ctx context.Context,
+	tokenString string,
+) (*session.Token, error) {
 	decodedKey, err := jwt.ParseECPublicKeyFromPEM([]byte(os.Getenv("JWT_PUBLIC_KEY")))
 	if err != nil {
 		return nil, err
@@ -81,8 +84,11 @@ func (t *SessionToken) VerifyToken(ctx context.Context, tokenString string) (*se
 	if err != nil {
 		return nil, errors.Join(err, errors.New("failed parsing token"))
 	}
+
 	claims := parsedToken.Claims.(jwt.RegisteredClaims)
+
 	claims.Valid()
+
 	return &session.Token{
 		Valid: parsedToken.Valid,
 		Claims: session.NewClaims(

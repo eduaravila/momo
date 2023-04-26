@@ -72,6 +72,7 @@ func (o OauthPostgresStorage) GetOrCreateUserFromSub(
 ) (*session.User, error) {
 	accountAndUser, err := o.queries.GetAccountAndUserBySub(ctx, sub)
 	if err != nil && err != sql.ErrNoRows {
+
 		return nil, err
 	}
 
@@ -99,7 +100,7 @@ func (o OauthPostgresStorage) GetOrCreateUserFromSub(
 		user, err = session.NewUser(accountAndUser.UserID.String(), accountAndUser.CreatedAt, accountAndUser.UpdatedAt)
 	}
 
-	return user, err
+	return user, nil
 }
 
 func (o OauthPostgresStorage) AddAccountWithUser(
@@ -169,8 +170,11 @@ func (o *OauthPostgresStorage) FindUserFromSub(ctx context.Context, sub string) 
 	return session.UnmarshalUserFromDatabase(dbUser.ID.String(), dbUser.CreatedAt, dbUser.UpdatedAt)
 }
 
-func (o *OauthPostgresStorage) GetSession(cxt context.Context, sessionIdString string) (*session.Session, error) {
-	sessionID, err := uuid.Parse(sessionIdString)
+func (o *OauthPostgresStorage) GetSession(
+	cxt context.Context,
+	sessionIDString string,
+) (*session.Session, error) {
+	sessionID, err := uuid.Parse(sessionIDString)
 
 	if err != nil {
 		return nil, err

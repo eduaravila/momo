@@ -4,10 +4,10 @@ import (
 	"context"
 	"math/rand"
 	"net"
-	"os"
 	"testing"
 	"time"
 
+	"github.com/eduaravila/momo/apps/auth/internal/adapter"
 	"github.com/eduaravila/momo/apps/auth/internal/domain/session"
 	"github.com/eduaravila/momo/apps/auth/internal/storage"
 	"github.com/eduaravila/momo/packages/postgres/queries"
@@ -29,16 +29,28 @@ var userAgents = []string{
 	"Opera/9.80 (Android; Opera Mini/28.0.2254/66.318; U; en) Presto/2.12.423 Version/12.16",
 }
 
+func TestMain(m *testing.M) {
+	loc, err := time.LoadLocation("UTC")
+	if err != nil {
+		// handle error
+	}
+	time.Local = loc
+
+}
+
 func TestSessionPosgresStorage_AddSession(t *testing.T) {
-	repo := newSessionPostgresStorage(t)
 
 	t.Parallel()
+	repo := newSessionPostgresStorage(t)
+
 	testCases := []struct {
 		name               string
-		SessionConstructor func(t *testing.T) *session.Session
+		UserConstructor    func(t *testing.T) *session.User
+		SessionConstructor func(t *testing.T, user *session.User) *session.Session
 	}{
 		{
 			name:               "standard_session",
+			UserConstructor:    newExampleUser,
 			SessionConstructor: newExampleSession,
 		},
 	}
@@ -47,8 +59,11 @@ func TestSessionPosgresStorage_AddSession(t *testing.T) {
 		c := c
 		t.Run(c.name, func(t *testing.T) {
 			ctx := context.Background()
-			session := c.SessionConstructor(t)
-			err := repo.AddSession(ctx, session)
+			user := c.UserConstructor(t)
+			_, err := repo.GetOrCreateUserFromSub(ctx, user.ID, "test")
+			require.NoError(t, err)
+			session := c.SessionConstructor(t, user)
+			err = repo.AddSession(ctx, session)
 			require.NoError(t, err)
 			assertPersistedSession(t, repo, session)
 		})
@@ -61,13 +76,14 @@ func assertPersistedSession(t *testing.T, repo session.Storage, se *session.Sess
 	ctx := context.Background()
 
 	persistedSession, err := repo.GetSession(ctx, se.ID)
+
 	require.NoError(t, err)
 
 	assertSession(t, se, persistedSession)
 }
 
 var cmpRoundTimeOpt = cmp.Comparer(func(x, y time.Time) bool {
-	return x.Round(time.Second).Equal(y.Round(time.Second))
+	return x.UTC().Truncate(time.Second).Equal(y.UTC().Truncate(time.Second))
 })
 
 func assertSession(t *testing.T, expected, actual *session.Session) {
@@ -77,25 +93,24 @@ func assertSession(t *testing.T, expected, actual *session.Session) {
 		cmpRoundTimeOpt,
 		cmp.AllowUnexported(session.Session{}),
 	}
-	assert.True(t, cmp.Equal(expected, actual, cmpOpts))
+
+	assert.True(t, cmp.Equal(expected, actual, cmpOpts),
+		cmp.Diff(expected, actual, cmpOpts))
 }
 
-func newExampleClaims(userID string) *session.Claims {
-	return session.NewClaims(
-		os.Getenv("JWT_ISSUER"),
-		userID,
-		time.Now().Add(time.Hour*24*30),
-		time.Now(),
-		time.Now())
-}
+func newExampleSession(t *testing.T, user *session.User) *session.Session {
+	t.Helper()
+	ctx := context.Background()
+	userID := user.ID
 
-func newExampleSession(t *testing.T) *session.Session {
-	userID := uuid.NewString()
+	tokenFactory := adapter.NewJwtTokenCreator()
+	sessionToken, err := tokenFactory.CreateSessionToken(ctx, userID)
+	require.NoError(t, err)
 
 	token, err := session.NewSessionToken(
-		uuid.NewString(),
+		sessionToken.Raw,
 		true,
-		newExampleClaims(userID),
+		sessionToken.Claims,
 	)
 
 	require.NoError(t, err)
@@ -122,6 +137,18 @@ func newExampleIP() string {
 	)
 
 	return ip.String()
+}
+
+func newExampleUser(t *testing.T) *session.User {
+	userID := uuid.NewString()
+	user, err := session.NewUser(
+		userID,
+		time.Now(),
+		time.Now())
+
+	require.NoError(t, err)
+
+	return user
 }
 
 func newSessionPostgresStorage(t *testing.T) *storage.OauthPostgresStorage {
