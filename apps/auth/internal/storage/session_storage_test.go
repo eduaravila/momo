@@ -2,6 +2,7 @@ package storage_test
 
 import (
 	"context"
+	"fmt"
 	"math/rand"
 	"net"
 	"testing"
@@ -29,6 +30,11 @@ var userAgents = []string{
 	"Opera/9.80 (Android; Opera Mini/28.0.2254/66.318; U; en) Presto/2.12.423 Version/12.16",
 }
 
+var oauthProviders = []string{
+	"twitch",
+	"google",
+}
+
 func TestMain(m *testing.M) {
 	loc, err := time.LoadLocation("UTC")
 	if err != nil {
@@ -38,10 +44,25 @@ func TestMain(m *testing.M) {
 
 }
 
-func TestSessionPosgresStorage_AddSession(t *testing.T) {
+func TestOauthPostgresStorage(t *testing.T) {
+	t.Parallel()
+
+	repo := newSessionPostgresStorage(t)
+
+	t.Run("sessionPostgresStorage", func(t *testing.T) {
+		t.Parallel()
+		testSessionPosgresStorage_AddSession(t, repo)
+	})
+
+	t.Run("AddAccountWithUser", func(t *testing.T) {
+		testAddAccountWithUser(t, repo)
+	})
+
+}
+
+func testSessionPosgresStorage_AddSession(t *testing.T, repo session.Storage) {
 
 	t.Parallel()
-	repo := newSessionPostgresStorage(t)
 
 	testCases := []struct {
 		name               string
@@ -80,6 +101,18 @@ func assertPersistedSession(t *testing.T, repo session.Storage, se *session.Sess
 	require.NoError(t, err)
 
 	assertSession(t, se, persistedSession)
+}
+
+func testAddAccountWithUser(t *testing.T, repo session.Storage) {
+	user := newExampleUser(t)
+	sub := uuid.New().String()
+	account := newExampleAccount(t, user, sub)
+	ctx := context.Background()
+
+	_, err := repo.GetOrCreateUserFromSub(ctx, user.ID, sub)
+	require.NoError(t, err)
+	err = repo.AddAccountWithUser(ctx, account, user)
+	require.NoError(t, err)
 }
 
 var cmpRoundTimeOpt = cmp.Comparer(func(x, y time.Time) bool {
@@ -158,4 +191,38 @@ func newSessionPostgresStorage(t *testing.T) *storage.OauthPostgresStorage {
 	require.NoError(t, err)
 
 	return storage.NewSessionPostgresStorage(queries.New(db))
+}
+
+func newExampleAccount(t *testing.T, user *session.User, sub string) *session.Account {
+	scope := []string{"user:read:email"}
+
+	t.Helper()
+	account, err := session.NewAccount(
+		uuid.NewString(),
+		user.ID,
+		uuid.NewString(),
+		uuid.NewString(),
+		uuid.NewString(),
+		newExampleEmailWithEpocTime(),
+		newExampleUserNameWithEpocTime(),
+		oauthProviders[rand.Intn(len(oauthProviders))],
+		sub,
+		scope,
+	)
+	require.NoError(t, err)
+	return account
+}
+
+func newExampleUserNameWithEpocTime() string {
+	return fmt.Sprintf(
+		"test%d",
+		time.Now().Unix(),
+	)
+}
+
+func newExampleEmailWithEpocTime() string {
+	return fmt.Sprintf(
+		"test%d@test.com",
+		time.Now().Unix(),
+	)
 }
