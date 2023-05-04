@@ -1,10 +1,9 @@
 .PHONY: open_api_http
 open_api_http:
-	@./scripts/open_api_http.sh auth auth port internal/port
+	@./scripts/open_api_http.sh auth auth ports internal/ports
 
 proto_auth:
 	@./scripts/proto.sh auth auth
-
 
 .PHONY: build_and_migrate_postgres_auth
 build_and_migrate_postgres_auth:

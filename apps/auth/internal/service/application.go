@@ -14,12 +14,16 @@ import (
 )
 
 func NewApplication() app.Application {
-
 	tokenService := adapter.NewJwtTokenCreator()
-
 	oAuthService := adapter.NewTwitchAPI()
 
 	return newApplication(oAuthService, tokenService, tokenService)
+}
+
+func NewTestApplication() app.Application {
+	tokenService := &TokenServiceMock{}
+
+	return newApplication(&OAuthServiceMock{}, tokenService, tokenService)
 }
 
 func newApplication(

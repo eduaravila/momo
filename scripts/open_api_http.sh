@@ -18,3 +18,15 @@ oapi-codegen \
     -package "$package" \
     -o "apps/$app/$output_dir/openapi_${service}_types.gen.go" \
     "apps/$app/api/openapi/$service.yaml"
+
+oapi-codegen \
+    -generate client \
+    -package "$service" \
+    -o "packages/client/${service}/openapi_client.gen.go" \
+    "apps/$app/api/openapi/$service.yaml"
+
+oapi-codegen \
+    -generate types \
+    -package "$service" \
+    -o "packages/client/${service}/openapi_types.gen.go" \
+    "apps/$app/api/openapi/$service.yaml"

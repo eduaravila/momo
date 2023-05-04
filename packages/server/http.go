@@ -13,7 +13,8 @@ import (
 func RunHTTPServer(
 	prefix,
 	addrs string,
-	createHandler func() http.Handler) {
+	createHandler func() http.Handler,
+) {
 	rootRouter := http.NewServeMux()
 	rootRouter.Handle(prefix+"/", http.StripPrefix(prefix, createHandler()))
 
