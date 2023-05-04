@@ -17,7 +17,7 @@ services:
     volumes:
       - ./apps/auth:/github.com/eduaravila/momo/apps/auth
     ports:
-      - "8080:8080"
+      - "6001:6001"
       - "4000:4000"
     restart: always
     networks:

@@ -15,9 +15,10 @@ func main() {
 	if grcpPort == "" {
 		grcpPort = "8080"
 	}
+
 	app := service.NewApplication()
 
-	server.RunGRPCServer(":"+grcpPort, func(server *grpc.Server) {
+	go server.RunGRPCServer(":"+grcpPort, func(server *grpc.Server) {
 		auth.RegisterSessionServiceServer(server, ports.NewGRPCServer(app))
 	})
 }
