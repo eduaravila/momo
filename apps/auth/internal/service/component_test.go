@@ -9,6 +9,7 @@ import (
 	v1 "github.com/eduaravila/momo/apps/auth/internal/ports/v1"
 	"github.com/eduaravila/momo/packages/server"
 	"github.com/eduaravila/momo/packages/test"
+	"github.com/stretchr/testify/require"
 )
 
 func startService() bool {
@@ -17,7 +18,7 @@ func startService() bool {
 		port = "8080"
 	}
 
-	app := NewApplication()
+	app := NewTestApplication()
 	authAddress := os.Getenv("AUTH_HTTP_ADDR")
 
 	go server.RunHTTPServer("/api", ":"+port, func() http.Handler {
@@ -31,6 +32,16 @@ func startService() bool {
 	}
 
 	return true
+}
+
+func TestAuthenticateWithTwitch(t *testing.T) {
+	t.Parallel()
+	addr := os.Getenv("AUTH_HTTP_ADDR")
+	client := test.NewAuthHTTPClient(t)
+	ok := test.WaitFor(addr)
+	require.True(t, ok, "auth HTTP time out.")
+	// TODO: create mock session token generator, in mock services
+	client.ShouldAuthenticateWithTwitch(t, "code", "scope", "session-token")
 }
 
 func TestMain(m *testing.M) {

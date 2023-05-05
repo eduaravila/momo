@@ -11,9 +11,9 @@ import (
 )
 
 func main() {
-	port := os.Getenv("AUTH_PORT")
+	port := os.Getenv("AUTH_HTTP_PORT")
 	if port == "" {
-		port = "8080"
+		port = "6001"
 	}
 
 	app := service.NewApplication()

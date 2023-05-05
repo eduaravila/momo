@@ -13,7 +13,7 @@ import (
 func main() {
 	grcpPort := os.Getenv("AUTH_GRPC_PORT")
 	if grcpPort == "" {
-		grcpPort = "8080"
+		grcpPort = "6002"
 	}
 
 	app := service.NewApplication()
