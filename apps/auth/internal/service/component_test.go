@@ -13,15 +13,10 @@ import (
 )
 
 func startService() bool {
-	port := os.Getenv("AUTH_PORT")
-	if port == "" {
-		port = "8080"
-	}
-
 	app := NewTestApplication()
 	authAddress := os.Getenv("AUTH_HTTP_ADDR")
 
-	go server.RunHTTPServer("/api", ":"+port, func() http.Handler {
+	go server.RunHTTPServer("/api", authAddress, func() http.Handler {
 		return ports.Handler(v1.NewHTTPServer(app))
 	})
 

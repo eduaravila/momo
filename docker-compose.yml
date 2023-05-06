@@ -1,7 +1,31 @@
 # docker-compose file to run golang server
 version: '3'
 services:
-  auth:
+  auth-grpc:
+    build:
+      dockerfile: ./apps/auth/Dockerfile
+      context: .
+      target: dev
+    container_name: auth_app
+    hostname: auth_api
+    working_dir: /github.com/eduaravila/momo/apps/auth
+    command: sh -c "air -c .air-grpcs.toml"
+    environment:
+      - ENV=development
+    env_file:
+      - .env.development
+    volumes:
+      - ./apps/auth:/github.com/eduaravila/momo/apps/auth
+    ports:
+      - "6001:6001"
+      - "4000:4000"
+    restart: always
+    networks:
+      - postgres-auth
+    depends_on:
+      - postgres-auth
+
+  auth-http:
     build:
       dockerfile: ./apps/auth/Dockerfile
       context: .
@@ -21,11 +45,11 @@ services:
       - "4000:4000"
     restart: always
     networks:
-      - postgres_auth
+      - postgres-auth
     depends_on:
-      - postgres_auth
-  postgres_auth:
-    container_name: postgres_auth
+      - postgres-auth
+  postgres-auth:
+    container_name: postgres-auth
     image: postgres:15.1-alpine
     ports:
       - "5433:5432"
@@ -35,7 +59,7 @@ services:
       - POSTGRES_DB=postgres
     restart: always
     networks:
-      - postgres_auth
+      - postgres-auth
     volumes:
       - postgresdata:/var/lib/postgresql/data
   redis:
@@ -45,8 +69,8 @@ services:
     restart: always
 
 networks:
-  postgres_auth:
-    name: postgres_auth_network
+  postgres-auth:
+    name: postgres-auth-network
     driver: bridge
 volumes:
   postgresdata:

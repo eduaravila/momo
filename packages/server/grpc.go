@@ -12,7 +12,7 @@ import (
 
 func RunGRPCServer(port string, registerServer func(server *grpc.Server)) {
 	if port == "" {
-		port = "8080"
+		port = "3002"
 	}
 
 	flag.Parse()

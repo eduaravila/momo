@@ -16,6 +16,6 @@ fi
 # Run the container
 docker run --rm \
   --env DATABASE_URL=${DATABASE_URL} \
-  --network postgres_auth_network \
+  --network postgres-auth-network \
   "${IMAGE_NAME}" \
   sh -c "goose -dir ./migrations postgres 'postgresql://postgres:postgres@${DATABASE_URL}:5432/postgres' ${MIGRATION_DIRECTION}"
