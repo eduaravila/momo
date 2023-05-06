@@ -63,6 +63,6 @@ func (h HTTPServer) OauthTwitchCallback(
 		})
 	}
 
-	http.Redirect(w, r, os.Getenv("DASHBOARD_APP_URL"), http.StatusFound)
+	http.Redirect(w, r, os.Getenv("DASHBOARD_APP_REDIRECT_URL"), http.StatusFound)
 
 }

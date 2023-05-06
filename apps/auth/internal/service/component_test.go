@@ -36,12 +36,15 @@ func startService() bool {
 
 func TestAuthenticateWithTwitch(t *testing.T) {
 	t.Parallel()
+
 	addr := os.Getenv("AUTH_HTTP_ADDR")
 	client := test.NewAuthHTTPClient(t)
 	ok := test.WaitFor(addr)
 	require.True(t, ok, "auth HTTP time out.")
-	// TODO: create mock session token generator, in mock services
-	client.ShouldAuthenticateWithTwitch(t, "code", "scope", "session-token")
+
+	res := client.ShouldAuthenticateWithTwitch(t, "code", "scope", "session-token")
+
+	require.Contains(t, res.HTTPResponse.Header.Get("Location"), os.Getenv("DASHBOARD_APP_REDIRECT_URL"))
 }
 
 func TestMain(m *testing.M) {

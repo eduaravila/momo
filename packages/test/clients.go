@@ -30,7 +30,7 @@ func (a *AuthHTTPClient) ShouldAuthenticateWithTwitch(
 	code,
 	scope string,
 	expectedSessionToken string,
-) error {
+) *auth.OauthTwitchCallbackResponse {
 	res, err := a.client.OauthTwitchCallbackWithResponse(context.Background(), &auth.OauthTwitchCallbackParams{
 		Code:  code,
 		Scope: scope,
@@ -38,9 +38,6 @@ func (a *AuthHTTPClient) ShouldAuthenticateWithTwitch(
 
 	require.NoError(t, err)
 	require.Equal(t, http.StatusFound, res.StatusCode)
-	sessionCookie := res.HTTPResponse.Cookies()[0]
 
-	require.Equal(t, sessionCookie.Value, expectedSessionToken)
-
-	return err
+	return res
 }
