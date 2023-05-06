@@ -23,8 +23,6 @@ RUN apk add build-base
 RUN go install github.com/go-delve/delve/cmd/dlv@latest
 RUN ls || cat 
 
-CMD [ "/go/bin/dlv", "--listen=:4000", "--headless=true", "--log=true", "--accept-multiclient", "--api-version=2", "debug", "cmd/http/main.go" ]
-
 FROM base as dev
 
 RUN go install github.com/cosmtrek/air@latest
