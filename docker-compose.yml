@@ -9,7 +9,7 @@ services:
     container_name: auth-grpc-app
     hostname: auth-grpc-app 
     working_dir: /github.com/eduaravila/momo/apps/auth
-    command: sh -c "air -c .air-grpcs.toml"
+    command: sh -c "air -c .air-grpc.toml"
     environment:
       - ENV=development
     env_file:
@@ -17,8 +17,7 @@ services:
     volumes:
       - ./apps/auth:/github.com/eduaravila/momo/apps/auth
     ports:
-      - "6001:6001"
-      - "4000:4000"
+      - "3002:3002"
     restart: always
     networks:
       - postgres-auth
@@ -33,7 +32,7 @@ services:
     container_name: auth-http-app
     hostname: auth-http-app 
     working_dir: /github.com/eduaravila/momo/apps/auth
-    command: sh -c "air -c .air.toml"
+    command: sh -c "air -c .air-http.toml"
     environment:
       - ENV=development
     env_file:
@@ -41,8 +40,7 @@ services:
     volumes:
       - ./apps/auth:/github.com/eduaravila/momo/apps/auth
     ports:
-      - "6001:6001"
-      - "4000:4000"
+      - "3001:3001"
     restart: always
     networks:
       - postgres-auth
