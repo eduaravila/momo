@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package parser;
+
+option go_package = "github.com/eduaravila/momo/packages/genproto/parser";
+
+service ParserService {
+    rpc ParseStringToAudio(ParseStringToAudioRequest) returns (Audio) {};
+}
+
+message ParseStringToAudioRequest { 
+    // string to parse, following the format: "voice+colon" + "text to parse"
+    string text = 1;
+}
+
+message IsValidSessionTokenResponse {
+    Audio audio = 1;
+}
+
+message Audio {
+    repeated Chunk chunks = 1;
+};
+
+message Chunk {
+    repeated Filter filters = 1;
+    repeated Segment segments = 2;
+    string voice = 4;
+}
+
+message Filter {    
+    int32 id = 1; // valid filter id
+}
+
+message Segment {
+    oneof segment {
+        SoundBite sound_bite = 1; // short audio 
+        SpokenText spoken_text = 2; // text to be spoken
+    }
+}
+
+message SoundBite {
+    int32 id = 1;
+}
+
+message SpokenText {
+    string text = 1;
+}
+
+

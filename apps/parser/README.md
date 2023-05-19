@@ -52,12 +52,33 @@ filters are:
 ```go
 
 type audio struct {
-	filters:[]
-	segments:[
-		soundBite,
-		soundBite
-		
-	]
+	chunks []Chunk
+}
+
+type Chunk[C Segment] struct {
+	filters:[]Filter
+	segments:[]C
+	voice: string
+}
+
+type Filter struct {
+	id int
+}
+
+type SoundBite strut {
+	id int
+}
+
+type SpokenText  string
+
+func (* SpokenText)
+
+type Segment interface {
+    SoundBite | SpokenText
+}
+
+type SoundBite struct {
+	id int
 }
 
 `{7}[76]forsen:help us, chat, he is an imposter. nani: {11} we are trapped chat, only, you, can save, us. [76], help us.`
@@ -155,7 +176,7 @@ an alternative for a segment could be
 			spokenText: "help us.",			
 		]
 	}
-we just addd the voice if the segment has it 
+we just add the voice if the segment has it 
 
 {7}[76][71][74]
 the prev example doesnt have any voices or text, just sound effects and bites, so the segment doest need any voices, in other words the voices are just applied for spokenText 
