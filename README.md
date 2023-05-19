@@ -5,5 +5,5 @@ TTS system that enhances the connection between streamers and their audience and
 check my blog to follow my progress: https://tamagoyaki.tech/tags/momo/
 
 
-- [auth](auth): service to hangle authenticantion and autorization
-- [parser](parse): parses and filters text messages to structured audios
+- [auth](./apps/auth): service to hangle authenticantion and autorization
+- [parser](./apps/parse): parses and filters text messages to structured audios
