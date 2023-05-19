@@ -6,4 +6,4 @@ check my blog to follow my progress: https://tamagoyaki.tech/tags/momo/
 
 
 - [auth](./apps/auth): service to hangle authenticantion and autorization
-- [parser](./apps/parse): parses and filters text messages to structured audios
+- [parser](./apps/parser): parses and filters text messages to structured audios
