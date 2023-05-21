@@ -1,6 +1,3 @@
-
-
-
 constrains
 - effects are valid for bites and spokenText
 - **40 s sound limit**
@@ -52,33 +49,12 @@ filters are:
 ```go
 
 type audio struct {
-	chunks []Chunk
-}
-
-type Chunk[C Segment] struct {
-	filters:[]Filter
-	segments:[]C
-	voice: string
-}
-
-type Filter struct {
-	id int
-}
-
-type SoundBite strut {
-	id int
-}
-
-type SpokenText  string
-
-func (* SpokenText)
-
-type Segment interface {
-    SoundBite | SpokenText
-}
-
-type SoundBite struct {
-	id int
+	filters:[]
+	segments:[
+		soundBite,
+		soundBite
+		
+	]
 }
 
 `{7}[76]forsen:help us, chat, he is an imposter. nani: {11} we are trapped chat, only, you, can save, us. [76], help us.`
@@ -189,4 +165,38 @@ the prev example doesnt have any voices or text, just sound effects and bites, s
 	]	
 }
 
+```
+
+
+```go
+type audio struct {
+	chunks []Chunk
+}
+
+
+type Chunk[C Segment] struct {
+	filters:[]Filter
+	segments:[]C
+	voice: string
+}
+
+type Filter struct {
+	id int
+}
+
+type SoundBite strut {
+	id int
+}
+
+type SpokenText  string
+
+func (* SpokenText)
+
+type Segment interface {
+    SoundBite | SpokenText
+}
+
+type SoundBite struct {
+	id int
+}
 ```
