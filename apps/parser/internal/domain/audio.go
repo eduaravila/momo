@@ -5,7 +5,6 @@ type Audio struct {
 }
 
 type Segment interface {
-	ID() int
 }
 
 type Chunk struct {
