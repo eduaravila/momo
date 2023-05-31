@@ -30,6 +30,7 @@ All filters except {1}{2} and {9} can stack.
 
 `{7}[76]forsen:help us, chat, he is an imposter. nani: we are trapped chat, only, you, can save, us. [76], help us.`
 
+
 filters are:
 
 {1} room echo
@@ -53,7 +54,6 @@ type audio struct {
 	segments:[
 		soundBite,
 		soundBite
-		
 	]
 }
 
@@ -167,6 +167,34 @@ the prev example doesnt have any voices or text, just sound effects and bites, s
 
 ```
 
+```
+{7}{8}{7} 
+
+in theory this follows the rules but it does not have any
+text that can be transformed to audio
+
+[
+	{
+    	effects:[7],
+	},
+	{
+    	effects:[7, 8],
+	},	
+	{
+		effects:[7,8,7],
+	}
+]
+
+same applies for
+
+" "
+
+[this is invalid]{also this is invalid}{.}
+<EMPTY_STRING>
+
+
+
+```
 
 ```go
 type audio struct {
@@ -200,3 +228,39 @@ type SoundBite struct {
 	id int
 }
 ```
+
+{int} = filter
+{.} = cancel last filter
+[int] = sound bite
+string = spoken text
+voice+colon = voice
+
+
+and audio is a collection of audio chunks
+
+a chunk has: 
+voice, 
+a collection of filters, 
+a collection of segments
+
+
+a voice is an available voice, voices can be identified 
+by id's example: "trump", "obama"
+
+
+every change of voice will create a new "chunk"
+
+a filter is an audio filter that has effects on "spoken text" and 
+"sound bites"
+filters can stack 
+theres a limit on the number of stacked filters per "audio chunk"
+
+
+A segment is a collection of "sound bites" and "spoken text" 
+
+
+we create new audio chunk when:
+
+- we change the voice
+- we add a new filter
+- we remove a filter

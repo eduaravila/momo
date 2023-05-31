@@ -13,6 +13,18 @@ type Chunk struct {
 	voice    string
 }
 
+func NewChunk() *Chunk {
+	return &Chunk{}
+}
+
+func (c *Chunk) AddSegment(segment Segment) {
+	c.segments = append(c.segments, segment)
+}
+
+func (c *Chunk) AddFilter(filter Filter) {
+	c.filters = append(c.filters, filter)
+}
+
 func NewAudio() *Audio {
 	return &Audio{}
 }

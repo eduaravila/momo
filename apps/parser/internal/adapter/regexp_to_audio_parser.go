@@ -29,11 +29,14 @@ func (RegexpToAudioParser) ToAudio(input []string) (*domain.Audio, error) {
 
 	var stringToAudioParser StringToAudioParser = NewTextToAudioChainParser()
 	audio := domain.NewAudio()
+	currentChunk := domain.NewChunk()
+
 	for _, s := range input {
 		chunk, err := stringToAudioParser.Parse(s)
 		if err != nil {
 			continue
 		}
+
 		audio.AddChunk(chunk)
 	}
 
